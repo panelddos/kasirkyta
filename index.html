@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasirKyta - Solusi Kasir Digital</title>
+    <title>KasirKyta - Solusi Kasir Digital Terpadu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -15,32 +15,67 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans" x-data="kasirKyta()" x-init="initData()">
+<body class="bg-slate-50 font-sans" x-data="kasirKyta()" x-init="initApp()">
 
     <template x-if="currentPage === 'landing'">
-        <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 to-blue-900 text-white p-6">
-            <h1 class="text-7xl font-black mb-4 tracking-tighter">KasirKyta</h1>
-            <p class="text-xl text-center max-w-2xl opacity-90 mb-8">
-                Sistem kasir terlengkap untuk bisnis Anda. Kelola stok, pantau omset, dan cetak struk dengan mudah.
-            </p>
-            <div class="flex flex-col items-center gap-4">
-                <button @click="currentPage = 'login'" class="bg-white text-indigo-700 px-10 py-3 rounded-full font-bold shadow-xl hover:scale-105 transition">Sign In</button>
-                <a href="https://wa.me/6285138361951" target="_blank" class="text-indigo-200 text-sm hover:underline">
-                    Tertarik bergabung? Hubungi Admin via WhatsApp
-                </a>
+        <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white p-6">
+            <div class="text-center space-y-6 max-w-4xl animate-fade-in">
+                <h1 class="text-8xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">
+                    KasirKyta
+                </h1>
+                <p class="text-2xl font-light leading-relaxed opacity-90">
+                    KasirKyta adalah kasir berbasis website yang sudah <span class="font-bold text-indigo-400">lengkap akan semuanya</span> yang dibutuhkan untuk manajemen bisnis modern. Mulai dari kontrol stok hingga laporan omset real-time.
+                </p>
+                <div class="pt-8">
+                    <button @click="currentPage = 'auth-choice'" class="bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-4 rounded-2xl font-black text-xl shadow-2xl shadow-indigo-500/20 transition-all transform hover:scale-105 active:scale-95">
+                        SIGN IN SEKARANG
+                    </button>
+                </div>
+                <div class="pt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm opacity-60">
+                    <div class="p-4 border border-white/10 rounded-xl font-bold uppercase tracking-widest">Multi-Toko</div>
+                    <div class="p-4 border border-white/10 rounded-xl font-bold uppercase tracking-widest">Aman & Cepat</div>
+                    <div class="p-4 border border-white/10 rounded-xl font-bold uppercase tracking-widest">Laporan Akurat</div>
+                </div>
             </div>
         </div>
     </template>
 
-    <template x-if="currentPage === 'login'">
-        <div class="min-h-screen flex items-center justify-center p-6 bg-slate-100">
-            <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md">
-                <h2 class="text-3xl font-bold mb-6 text-indigo-800">Login</h2>
+    <template x-if="currentPage === 'auth-choice'">
+        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6">
+            <h2 class="text-3xl font-black text-slate-800 mb-8 uppercase tracking-tighter italic">Pilih Akses Login</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                <button @click="openLogin('owner')" class="bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all border-b-8 border-amber-500 group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition">👑</div>
+                    <h3 class="font-black text-xl text-slate-800">OWNER</h3>
+                    <p class="text-xs text-gray-400 mt-2">Kontrol Penuh Sistem & Admin</p>
+                </button>
+                <button @click="openLogin('admin')" class="bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all border-b-8 border-indigo-500 group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition">⚙️</div>
+                    <h3 class="font-black text-xl text-slate-800">ADMIN</h3>
+                    <p class="text-xs text-gray-400 mt-2">Kelola Stok & Akun Kasir</p>
+                </button>
+                <button @click="openLogin('kasir')" class="bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all border-b-8 border-emerald-500 group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition">🛒</div>
+                    <h3 class="font-black text-xl text-slate-800">KASIR</h3>
+                    <p class="text-xs text-gray-400 mt-2">Melayani Transaksi Cepat</p>
+                </button>
+            </div>
+            <button @click="currentPage = 'landing'" class="mt-12 text-gray-400 font-bold hover:text-indigo-600 transition underline">Kembali ke Beranda</button>
+        </div>
+    </template>
+
+    <template x-if="currentPage === 'login-form'">
+        <div class="min-h-screen flex items-center justify-center p-6 bg-indigo-50">
+            <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md border-t-8" :class="getRoleColor(loginRole)">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black uppercase tracking-tight" x-text="loginRole + ' Login'"></h2>
+                    <span class="text-2xl" x-text="getRoleIcon(loginRole)"></span>
+                </div>
                 <div class="space-y-4">
-                    <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full border p-3 rounded-xl focus:ring-2 ring-indigo-500 outline-none">
-                    <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full border p-3 rounded-xl focus:ring-2 ring-indigo-500 outline-none">
-                    <button @click="handleLogin" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">Masuk ke Sistem</button>
-                    <button @click="currentPage = 'landing'" class="w-full text-gray-400 text-sm">Kembali</button>
+                    <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full border-2 p-4 rounded-2xl focus:ring-4 ring-indigo-100 outline-none transition">
+                    <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full border-2 p-4 rounded-2xl focus:ring-4 ring-indigo-100 outline-none transition">
+                    <button @click="handleLogin" class="w-full py-4 rounded-2xl font-black text-white shadow-lg shadow-indigo-200 transition-all active:scale-95" :class="getBtnColor(loginRole)">MASUK</button>
+                    <button @click="currentPage = 'auth-choice'" class="w-full text-gray-400 font-bold text-sm pt-4">Batal & Pilih Role Lain</button>
                 </div>
             </div>
         </div>
@@ -48,105 +83,102 @@
 
     <template x-if="currentPage === 'dashboard'">
         <div class="min-h-screen flex flex-col" x-cloak>
-            <nav class="bg-white border-b p-4 flex justify-between items-center px-8 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <span class="font-black text-2xl text-indigo-700" x-text="currentStore.storeName || 'KasirKyta'"></span>
-                    <span class="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-widest" x-text="currentUser.role"></span>
+            <nav class="bg-white border-b-2 p-4 flex justify-between items-center px-8 shadow-sm">
+                <div class="flex items-center gap-4 font-black italic text-2xl tracking-tighter">
+                    <span class="text-indigo-600">KasirKyta</span>
+                    <span class="text-slate-300">/</span>
+                    <span class="text-slate-800" x-text="currentStore.storeName"></span>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase ml-2" :class="getBtnColor(currentUser.role)" x-text="currentUser.role"></span>
                 </div>
-                <div class="flex items-center gap-6">
-                    <div class="hidden md:block text-right">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Omset Toko</p>
-                        <p class="font-bold text-green-600" x-text="formatIDR(currentStore.omset)"></p>
-                    </div>
-                    <button @click="logout" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-bold border border-red-100">Keluar</button>
-                </div>
+                <button @click="logout" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-black text-sm hover:bg-red-100 transition">LOGOUT</button>
             </nav>
 
             <main class="flex-1 p-6 grid grid-cols-12 gap-6 overflow-hidden">
-                <div class="col-span-12 lg:col-span-4 space-y-4 overflow-y-auto pr-2" x-show="currentUser.role === 'admin'">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-indigo-800 mb-3 text-sm">🏪 Pengaturan Toko & PIN</h3>
+                <div class="col-span-12 lg:col-span-4 space-y-4 overflow-y-auto" x-show="currentUser.role !== 'kasir'">
+                    <div class="bg-amber-50 p-6 rounded-3xl border-2 border-amber-200" x-show="currentUser.role === 'owner'">
+                        <h3 class="font-black text-amber-900 mb-4 text-xs tracking-widest uppercase">Pendaftaran Admin</h3>
+                        <div class="space-y-2">
+                            <input type="text" x-model="newUser.name" placeholder="Username Admin" class="w-full border-2 p-3 rounded-xl text-sm outline-none">
+                            <input type="password" x-model="newUser.pass" placeholder="Password Admin" class="w-full border-2 p-3 rounded-xl text-sm outline-none">
+                            <button @click="createUser('admin')" class="w-full bg-amber-600 text-white py-3 rounded-xl font-bold text-xs">BUAT AKUN ADMIN</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl border-2 border-slate-100" x-show="currentUser.role === 'admin' || currentUser.role === 'owner'">
+                        <h3 class="font-black text-indigo-900 mb-4 text-xs tracking-widest uppercase">Manajemen Toko</h3>
                         <div class="space-y-3">
-                            <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full border p-2 rounded-lg text-sm">
-                            <input type="password" x-model="currentStore.pin" placeholder="PIN Keamanan (Hapus Item)" class="w-full border p-2 rounded-lg text-sm">
-                            <button @click="saveStoreData" class="w-full bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold">Simpan Pengaturan</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-indigo-800 mb-3 text-sm">👥 Buat Akun Kasir</h3>
-                        <div class="space-y-2">
-                            <input type="text" x-model="newKasir.user" placeholder="Username Kasir" class="w-full border p-2 rounded-lg text-sm">
-                            <input type="password" x-model="newKasir.pass" placeholder="Password Kasir" class="w-full border p-2 rounded-lg text-sm">
-                            <button @click="createKasir" class="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-bold">+ Daftarkan Kasir</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 class="font-bold text-indigo-800 mb-3 text-sm">📦 Tambah Produk</h3>
-                        <div class="space-y-2">
-                            <input type="text" x-model="newP.name" placeholder="Nama Produk" class="w-full border p-2 rounded-lg text-sm">
-                            <div class="flex gap-2">
-                                <input type="number" x-model="newP.price" placeholder="Harga" class="w-1/2 border p-2 rounded-lg text-sm">
-                                <input type="number" x-model="newP.stock" placeholder="Stok" class="w-1/2 border p-2 rounded-lg text-sm">
+                            <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full border p-3 rounded-xl text-sm">
+                            <div class="pt-2 border-t mt-4">
+                                <p class="text-[10px] font-bold text-gray-400 mb-2 uppercase">Input Barang Baru</p>
+                                <input type="text" x-model="newP.name" placeholder="Nama Produk" class="w-full border p-3 rounded-xl text-sm mb-2">
+                                <div class="flex gap-2 mb-2">
+                                    <input type="number" x-model="newP.price" placeholder="Harga" class="w-1/2 border p-3 rounded-xl text-sm">
+                                    <input type="number" x-model="newP.stock" placeholder="Stok" class="w-1/2 border p-3 rounded-xl text-sm">
+                                </div>
+                                <button @click="addProduct" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs">TAMBAH KE KATALOG</button>
                             </div>
-                            <button @click="addProduct" class="w-full bg-green-600 text-white py-2 rounded-lg font-bold text-xs shadow-md">Tambah Ke Katalog</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50 p-6 rounded-3xl border-2 border-emerald-100" x-show="currentUser.role === 'admin' || currentUser.role === 'owner'">
+                        <h3 class="font-black text-emerald-900 mb-4 text-xs tracking-widest uppercase">Pendaftaran Kasir</h3>
+                        <div class="space-y-2">
+                            <input type="text" x-model="newKasir.user" placeholder="Username Kasir" class="w-full border p-3 rounded-xl text-sm">
+                            <input type="password" x-model="newKasir.pass" placeholder="Password Kasir" class="w-full border p-3 rounded-xl text-sm">
+                            <button @click="createUser('kasir')" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs">BUAT AKUN KASIR</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-hidden" :class="currentUser.role !== 'admin' ? 'lg:col-span-12' : ''">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 overflow-y-auto">
-                        <h3 class="font-bold text-gray-400 text-[10px] uppercase mb-4 tracking-widest">Katalog Barang</h3>
-                        <div class="grid grid-cols-2 gap-3">
-                            <template x-for="p in currentStore.products" :key="p.id">
-                                <div @click="addToCart(p)" class="p-3 bg-slate-50 border rounded-2xl hover:border-indigo-500 cursor-pointer transition relative overflow-hidden group">
-                                    <div class="w-full h-12 bg-indigo-50 rounded-lg mb-2 flex items-center justify-center font-bold text-indigo-200 group-hover:bg-indigo-600 group-hover:text-white transition-colors">📦</div>
-                                    <p x-text="p.name" class="font-bold text-xs truncate"></p>
-                                    <p x-text="formatIDR(p.price)" class="text-indigo-600 font-bold text-[10px]"></p>
-                                    <p class="text-[9px] text-gray-400 italic" x-text="'Stok: ' + p.stock"></p>
-                                </div>
-                            </template>
+                <div class="col-span-12 lg:col-span-8 flex flex-col h-[75vh]" :class="currentUser.role === 'kasir' ? 'lg:col-span-12' : ''">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-hidden">
+                        <div class="bg-white p-6 rounded-3xl border overflow-y-auto">
+                            <div class="grid grid-cols-2 gap-3">
+                                <template x-for="p in currentStore.products" :key="p.id">
+                                    <div @click="addToCart(p)" class="p-4 bg-slate-50 border-2 border-transparent hover:border-indigo-600 rounded-3xl cursor-pointer transition">
+                                        <p x-text="p.name" class="font-black text-xs text-slate-700"></p>
+                                        <p x-text="formatIDR(p.price)" class="text-indigo-600 font-bold text-xs mt-1"></p>
+                                        <div class="mt-2 flex justify-between items-center opacity-50 text-[9px]">
+                                            <span x-text="'Stok: ' + p.stock"></span>
+                                            <span>+ BELI</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-indigo-600 flex flex-col">
-                        <h3 class="font-bold mb-4 flex justify-between">🛒 Billing <span class="text-xs font-normal" x-text="cart.length + ' item'"></span></h3>
-                        <div class="flex-1 overflow-y-auto space-y-3 min-h-[250px] border-b mb-4 pr-2">
-                            <template x-for="(item, index) in cart" :key="index">
-                                <div class="flex justify-between items-start text-xs bg-slate-50 p-2 rounded-lg">
-                                    <div>
-                                        <p class="font-bold" x-text="item.name"></p>
-                                        <button @click="removeItem(index)" class="text-red-500 text-[9px] font-bold uppercase hover:underline">Hapus</button>
+                        <div class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-indigo-600 flex flex-col">
+                            <h3 class="font-black text-xl italic mb-6">BILLING</h3>
+                            <div class="flex-1 overflow-y-auto space-y-3 mb-6 pr-2">
+                                <template x-for="(item, index) in cart" :key="index">
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="font-bold" x-text="item.name + ' (x' + item.qty + ')'"></span>
+                                        <div class="flex items-center gap-3">
+                                            <span x-text="formatIDR(item.price * item.qty)"></span>
+                                            <button @click="removeItem(index)" class="text-red-500 font-bold underline text-[9px]">HAPUS</button>
+                                        </div>
                                     </div>
-                                    <div class="text-right font-bold">
-                                        <p x-text="item.qty + 'x'"></p>
-                                        <p class="text-indigo-600" x-text="formatIDR(item.price * item.qty)"></p>
-                                    </div>
+                                </template>
+                            </div>
+                            <div class="border-t pt-4">
+                                <div class="flex justify-between items-end">
+                                    <span class="font-bold text-slate-400 text-xs">GRAND TOTAL</span>
+                                    <span class="text-3xl font-black text-slate-900" x-text="formatIDR(totalPrice())"></span>
                                 </div>
-                            </template>
+                                <button @click="showReceiptModal = true" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black mt-4 shadow-xl shadow-indigo-200">BAYAR</button>
+                            </div>
                         </div>
-                        <div class="space-y-1 mb-4">
-                            <div class="flex justify-between text-xs text-gray-500"><span>Pajak (10%)</span><span x-text="formatIDR(calculateTax())"></span></div>
-                            <div class="flex justify-between font-black text-2xl text-slate-800"><span>TOTAL</span><span x-text="formatIDR(totalPrice())"></span></div>
-                        </div>
-                        <button @click="showReceiptModal = true" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition">BAYAR</button>
                     </div>
                 </div>
             </main>
         </div>
     </template>
 
-    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl relative">
-            <button @click="showReceiptModal = false" class="absolute top-4 right-4 text-gray-400">✕</button>
-            <div id="receipt-content" class="font-mono text-[11px] text-slate-800">
-                <center class="mb-4">
-                    <h2 class="font-black text-lg uppercase" x-text="currentStore.storeName"></h2>
-                    <p class="opacity-70" x-text="new Date().toLocaleString()"></p>
-                    <p>---------------------------------</p>
-                </center>
-                <div class="space-y-1">
+    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-xs rounded-[3rem] p-10 shadow-2xl">
+            <div id="receipt-content" class="font-mono text-[10px]">
+                <center class="mb-6"><h2 class="font-black text-xl italic" x-text="currentStore.storeName"></h2><p class="opacity-40">-----------------------------</p></center>
+                <div class="space-y-2 mb-6">
                     <template x-for="item in cart">
                         <div class="flex justify-between">
                             <span x-text="item.name + ' x' + item.qty"></span>
@@ -154,17 +186,10 @@
                         </div>
                     </template>
                 </div>
-                <p class="my-2">---------------------------------</p>
-                <div class="flex justify-between"><span>Subtotal:</span><span x-text="formatIDR(totalPrice() - calculateTax())"></span></div>
-                <div class="flex justify-between"><span>Pajak (10%):</span><span x-text="formatIDR(calculateTax())"></span></div>
-                <div class="flex justify-between font-bold text-base mt-2"><span>TOTAL:</span><span x-text="formatIDR(totalPrice())"></span></div>
-                <center class="mt-6 italic opacity-70">*** Terima Kasih ***</center>
+                <div class="flex justify-between font-black border-t-2 pt-4 text-base italic"><span>TOTAL:</span><span x-text="formatIDR(totalPrice())"></span></div>
             </div>
-            
-            <div class="mt-6 flex flex-col gap-2 no-print">
-                <button @click="processPayment" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg">CETAK SEKARANG</button>
-                <button @click="showReceiptModal = false" class="w-full text-slate-400 text-xs py-2">Batal</button>
-            </div>
+            <button @click="processPayment" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black mt-8">CETAK & SELESAI</button>
+            <button @click="showReceiptModal = false" class="w-full text-slate-300 py-2 text-xs">Batal</button>
         </div>
     </div>
 
@@ -172,92 +197,87 @@
         function kasirKyta() {
             return {
                 currentPage: 'landing',
-                showReceiptModal: false,
+                loginRole: '',
                 currentUser: null,
-                users: [], // Database User (Disimpan di localStorage kk_accounts)
-                allStores: {}, // Database per Toko (Disimpan di localStorage kk_stores)
-                currentStore: { storeName: 'Toko Baru', products: [], omset: 0, pin: '1234' },
-                
+                users: [],
+                allStores: {},
+                currentStore: { storeName: 'KasirKyta Store', products: [], omset: 0, pin: '1234' },
                 cart: [],
                 loginForm: { user: '', pass: '' },
+                newUser: { name: '', pass: '' },
                 newKasir: { user: '', pass: '' },
                 newP: { name: '', price: '', stock: '' },
+                showReceiptModal: false,
 
-                initData() {
-                    // SEED DATA: Akun Super Admin (Hanya ini yang bisa login pertama kali)
-                    // Username: admin | Pass: admin123
-                    const savedUsers = JSON.parse(localStorage.getItem('kk_accounts'));
-                    if (!savedUsers) {
-                        const initialUsers = [{ user: 'admin', pass: 'admin123', role: 'admin', owner: 'admin' }];
-                        localStorage.setItem('kk_accounts', JSON.stringify(initialUsers));
-                        this.users = initialUsers;
-                    } else {
-                        this.users = savedUsers;
-                    }
+                initApp() {
+                    this.users = JSON.parse(localStorage.getItem('kk_accounts')) || [{ user: 'owner', pass: 'owner123', role: 'owner', owner: 'owner' }];
                     this.allStores = JSON.parse(localStorage.getItem('kk_stores')) || {};
+                    
+                    const session = localStorage.getItem('kk_session');
+                    if(session) {
+                        this.currentUser = JSON.parse(session);
+                        this.loadStoreData();
+                        this.currentPage = 'dashboard';
+                    }
                 },
+
+                openLogin(role) { this.loginRole = role; this.currentPage = 'login-form'; },
 
                 handleLogin() {
                     let user = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass);
-                    if(user) {
+                    if(user && user.role === this.loginRole) {
                         this.currentUser = user;
-                        // Load data toko berdasarkan pemiliknya
-                        const storeKey = user.role === 'admin' ? user.user : user.owner;
-                        this.currentStore = this.allStores[storeKey] || { storeName: 'Toko ' + storeKey, products: [], omset: 0, pin: '1234' };
+                        localStorage.setItem('kk_session', JSON.stringify(user));
+                        this.loadStoreData();
                         this.currentPage = 'dashboard';
-                    } else {
-                        alert("Akses Ditolak! Hubungi Owner.");
-                    }
+                    } else { alert("Data Login Salah!"); }
                 },
 
-                createKasir() {
-                    if(!this.newKasir.user) return;
-                    this.users.push({ user: this.newKasir.user, pass: this.newKasir.pass, role: 'kasir', owner: this.currentUser.user });
+                createUser(role) {
+                    let u = role === 'admin' ? this.newUser.name : this.newKasir.user;
+                    let p = role === 'admin' ? this.newUser.pass : this.newKasir.pass;
+                    if(!u) return alert("Lengkapi data!");
+                    this.users.push({ 
+                        user: u, pass: p, role: role, 
+                        owner: (this.currentUser.role === 'owner' ? (role === 'admin' ? u : 'owner') : this.currentUser.owner) 
+                    });
                     localStorage.setItem('kk_accounts', JSON.stringify(this.users));
-                    alert("Kasir Berhasil Dibuat!");
-                    this.newKasir = { user: '', pass: '' };
+                    alert(role.toUpperCase() + " Berhasil Dibuat!");
+                    this.newUser = { name: '', pass: '' }; this.newKasir = { user: '', pass: '' };
+                },
+
+                loadStoreData() {
+                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    this.currentStore = this.allStores[storeKey] || { storeName: 'Toko ' + storeKey, products: [], omset: 0, pin: '1234' };
+                },
+
+                saveStoreData() {
+                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    this.allStores[storeKey] = this.currentStore;
+                    localStorage.setItem('kk_stores', JSON.stringify(this.allStores));
                 },
 
                 addProduct() {
-                    if(!this.newP.name) return;
                     this.currentStore.products.push({ id: Date.now(), ...this.newP, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock) });
                     this.saveStoreData();
                     this.newP = { name: '', price: '', stock: '' };
                 },
 
-                removeItem(index) {
-                    if(prompt("PIN Admin:") === this.currentStore.pin) this.cart.splice(index, 1);
-                    else alert("PIN Salah!");
+                addToCart(p) {
+                    let itm = this.cart.find(i => i.id === p.id);
+                    if(itm) itm.qty++; else this.cart.push({...p, qty: 1});
                 },
 
-                totalPrice() {
-                    let sub = this.cart.reduce((t, i) => t + (i.price * i.qty), 0);
-                    return sub + (sub * 0.1);
-                },
-                calculateTax() { return (this.cart.reduce((t, i) => t + (i.price * i.qty), 0)) * 0.1; },
-
-                processPayment() {
-                    this.cart.forEach(item => {
-                        let p = this.currentStore.products.find(prod => prod.id === item.id);
-                        if(p) p.stock -= item.qty;
-                    });
-                    this.currentStore.omset += this.totalPrice();
-                    this.saveStoreData();
-                    window.print();
-                    this.cart = [];
-                    this.showReceiptModal = false;
-                },
-
-                saveStoreData() {
-                    const storeKey = this.currentUser.role === 'admin' ? this.currentUser.user : this.currentUser.owner;
-                    this.allStores[storeKey] = this.currentStore;
-                    localStorage.setItem('kk_stores', JSON.stringify(this.allStores));
-                },
-
-                logout() { this.currentPage = 'landing'; this.currentUser = null; },
-                formatIDR(n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(n); }
+                removeItem(index) { if(prompt("PIN Admin:") === this.currentStore.pin) this.cart.splice(index, 1); },
+                totalPrice() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0) * 1.1; },
+                processPayment() { this.saveStoreData(); window.print(); this.cart = []; this.showReceiptModal = false; },
+                logout() { localStorage.removeItem('kk_session'); location.reload(); },
+                formatIDR(n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(n); },
+                getRoleColor(r) { return r === 'owner' ? 'border-amber-500' : (r === 'admin' ? 'border-indigo-600' : 'border-emerald-500'); },
+                getBtnColor(r) { return r === 'owner' ? 'bg-amber-500' : (r === 'admin' ? 'bg-indigo-600' : 'bg-emerald-500'); },
+                getRoleIcon(r) { return r === 'owner' ? '👑' : (r === 'admin' ? '⚙️' : '🛒'); }
             }
         }
     </script>
 </body>
-</html>
+        </html>
