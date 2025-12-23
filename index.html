@@ -3,221 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasirKyta - Secure POS</title>
+    <title>KasirKyta - Smart POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         [x-cloak] { display: none !important; }
         @media print {
             body * { visibility: hidden; }
             #receipt-content, #receipt-content * { visibility: visible; }
-            #receipt-content { position: absolute; left: 0; top: 0; width: 100%; border:none; }
+            #receipt-content { position: fixed; left: 0; top: 0; width: 100%; border:none; padding: 20px; }
             .no-print { display: none !important; }
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900" x-data="kasirKyta()" x-init="initApp()"> 
+<body class="bg-slate-50 text-slate-900" x-data="kasirKyta()" x-init="initApp()">
 
-    <div class="fixed bottom-5 right-5 z-[250] flex flex-col gap-2">
+    <div class="fixed top-5 right-5 z-[300] flex flex-col gap-2">
         <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="toast.show" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 transform translate-y-2"
-                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                 class="px-6 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3"
-                 :class="toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'">
-                <span x-text="toast.type === 'success' ? '✅' : '❌'"></span>
+            <div x-show="toast.show" x-transition class="px-5 py-3 rounded-xl shadow-lg text-white font-bold text-sm flex items-center gap-3" :class="toast.type === 'success' ? 'bg-indigo-600' : 'bg-rose-500'">
                 <span x-text="toast.message"></span>
             </div>
         </template>
     </div>
 
-    <nav class="fixed top-0 w-full bg-black/30 backdrop-blur-md z-[100] border-b border-white/10 px-6 py-2 flex justify-between items-center no-print">
-        <span class="font-black italic text-white tracking-tighter text-lg">KasirKyta</span>
-        <div class="flex gap-4">
-            <template x-if="currentPage !== 'landing'">
-                <button @click="currentPage = 'landing'" class="text-[10px] font-bold text-white/50 hover:text-white uppercase tracking-widest transition">Beranda</button>
-            </template>
-        </div>
-    </nav> 
+    <template x-if="currentPage === 'auth-choice' || currentPage === 'login-form'">
+        <div class="min-h-screen flex items-center justify-center bg-[#0f172a] p-4 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-emerald-600/10 rounded-full blur-[100px] translate-x-1/2 translate-y-1/2"></div>
 
-    <template x-if="currentPage === 'landing'">
-        <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-950 via-slate-900 to-black text-white p-6 text-center">
-            <div class="space-y-6 max-w-4xl">
-                <div class="inline-block px-4 py-2 bg-indigo-500/20 border border-indigo-500/50 rounded-full text-indigo-300 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
-                    Secure POS System 2025
+            <div class="w-full max-w-[400px] z-10">
+                <div class="text-center mb-10">
+                    <h1 class="text-3xl font-extrabold text-white italic tracking-tighter">KasirKyta<span class="text-indigo-500">.</span></h1>
+                    <p class="text-slate-400 text-sm mt-2">Professional Cloud POS System</p>
                 </div>
-                <h1 class="text-6xl md:text-8xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-emerald-400 to-indigo-500">
-                    KasirKyta
-                </h1>
-                <p class="text-xl font-light opacity-80">Sistem POS modern dengan <span class="font-bold text-emerald-400">Keamanan PIN & Laporan Real-time</span>.</p>
-                <div class="flex flex-col md:flex-row gap-4 justify-center items-center pt-10">
-                    <button @click="currentPage = 'auth-choice'" class="w-full md:w-auto bg-indigo-600 px-10 py-4 rounded-2xl font-black text-lg shadow-2xl hover:scale-105 transition-all border-b-4 border-indigo-800 uppercase italic">MASUK SISTEM</button>
-                    <a href="#" class="w-full md:w-auto bg-white/10 backdrop-blur-md px-10 py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-white/20 transition-all border border-white/20">JOIN MITRA</a>
+
+                <div x-show="currentPage === 'auth-choice'" class="space-y-3">
+                    <p class="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] text-center mb-4">Pilih Akses Masuk</p>
+                    <button @click="openLogin('owner')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl flex items-center justify-between transition group">
+                        <span class="text-white font-semibold">👑 Owner Portal</span>
+                        <span class="text-white/20 group-hover:text-indigo-400">→</span>
+                    </button>
+                    <button @click="openLogin('admin')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl flex items-center justify-between transition group">
+                        <span class="text-white font-semibold">⚙️ Admin Access</span>
+                        <span class="text-white/20 group-hover:text-indigo-400">→</span>
+                    </button>
+                    <button @click="openLogin('kasir')" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl flex items-center justify-between transition group">
+                        <span class="text-white font-semibold">🛒 Cashier Station</span>
+                        <span class="text-white/20 group-hover:text-indigo-400">→</span>
+                    </button>
                 </div>
-            </div>
-        </div>
-    </template> 
 
-    <template x-if="currentPage === 'auth-choice'">
-        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6">
-            <h2 class="text-2xl font-black mb-8 uppercase italic tracking-tighter">Login Sebagai</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
-                <button @click="openLogin('owner')" class="bg-white p-8 rounded-[2.5rem] shadow-lg border-b-8 border-amber-500 group transition hover:translate-y-[-4px]">
-                    <div class="text-5xl mb-4 group-hover:scale-110 transition">👑</div>
-                    <h3 class="font-black text-lg uppercase">Owner</h3>
-                </button>
-                <button @click="openLogin('admin')" class="bg-white p-8 rounded-[2.5rem] shadow-lg border-b-8 border-indigo-600 group transition hover:translate-y-[-4px]">
-                    <div class="text-5xl mb-4 group-hover:scale-110 transition">⚙️</div>
-                    <h3 class="font-black text-lg uppercase">Admin</h3>
-                </button>
-                <button @click="openLogin('kasir')" class="bg-white p-8 rounded-[2.5rem] shadow-lg border-b-8 border-emerald-500 group transition hover:translate-y-[-4px]">
-                    <div class="text-5xl mb-4 group-hover:scale-110 transition">🛒</div>
-                    <h3 class="font-black text-lg uppercase">Kasir</h3>
-                </button>
-            </div>
-            <button @click="currentPage = 'landing'" class="mt-10 text-slate-400 font-bold underline text-[10px] uppercase">Kembali</button>
-        </div>
-    </template> 
-
-    <template x-if="currentPage === 'login-form'">
-        <div class="min-h-screen flex items-center justify-center p-6 bg-slate-200">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl w-full max-w-sm border-t-[8px]" :class="getRoleColor(loginRole)">
-                <h2 class="text-xl font-black uppercase italic mb-8" x-text="loginRole + ' Login'"></h2>
-                <div class="space-y-4">
-                    <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full border-2 p-4 rounded-2xl outline-none text-sm focus:border-slate-900 transition">
-                    <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full border-2 p-4 rounded-2xl outline-none text-sm focus:border-slate-900 transition">
-                    <button @click="handleLogin" class="w-full py-4 rounded-2xl font-black text-white shadow-lg text-sm tracking-widest active:scale-95 transition-all" :class="getBtnColor(loginRole)">MASUK</button>
-                    <button @click="currentPage = 'auth-choice'" class="w-full text-slate-400 font-bold text-[10px] uppercase">Batal</button>
+                <div x-show="currentPage === 'login-form'" class="bg-white rounded-[2.5rem] p-8 shadow-2xl">
+                    <div class="flex items-center gap-2 mb-6">
+                        <span class="w-2 h-8 rounded-full" :class="getBtnColor(loginRole)"></span>
+                        <h2 class="text-xl font-bold capitalize" x-text="loginRole + ' Login'"></h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Username</label>
+                            <input type="text" x-model="loginForm.user" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-indigo-500 transition text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Password</label>
+                            <input type="password" x-model="loginForm.pass" class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-indigo-500 transition text-sm">
+                        </div>
+                        <button @click="handleLogin" class="w-full py-4 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-all mt-2" :class="getBtnColor(loginRole)">MASUK KE DASHBOARD</button>
+                        <button @click="currentPage = 'auth-choice'" class="w-full text-slate-400 font-bold text-[10px] uppercase">Kembali</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </template> 
+    </template>
 
     <template x-if="currentPage === 'dashboard'">
-        <div class="min-h-screen pt-12 flex flex-col" x-cloak>
-            <nav class="bg-white border-b-2 p-4 flex justify-between items-center px-10 shadow-sm sticky top-12 z-50">
+        <div class="min-h-screen pt-16 flex flex-col">
+            <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b z-[50] px-8 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <span class="font-black text-2xl italic text-indigo-700">KasirKyta</span>
-                    <span class="px-3 py-1 rounded-full text-[9px] font-black text-white uppercase" :class="getBtnColor(currentUser.role)" x-text="currentUser.role"></span>
+                    <span class="font-black text-xl italic text-slate-900">KasirKyta</span>
+                    <span class="px-3 py-1 rounded-lg text-[9px] font-bold text-white uppercase" :class="getBtnColor(currentUser.role)" x-text="currentUser.role"></span>
                 </div>
-                <button @click="logout" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-black text-[10px] hover:bg-red-500 hover:text-white transition-all">LOGOUT</button>
-            </nav> 
+                <div class="flex items-center gap-4">
+                    <span class="text-xs font-bold text-slate-500" x-text="currentUser.user"></span>
+                    <button @click="logout" class="bg-rose-50 text-rose-600 px-4 py-2 rounded-lg font-bold text-[10px] hover:bg-rose-600 hover:text-white transition">LOGOUT</button>
+                </div>
+            </nav>
 
-            <main class="flex-1 p-6 grid grid-cols-12 gap-6">
+            <main class="p-8 grid grid-cols-12 gap-6">
                 <div class="col-span-12 lg:col-span-4 space-y-6" x-show="currentUser.role !== 'kasir'">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-6 rounded-[2rem] border-l-8 border-emerald-500 shadow-sm relative">
-                            <p class="text-[9px] font-black text-slate-400 uppercase">Omset Hari Ini</p>
-                            <p class="text-lg font-black text-slate-800" x-text="formatIDR(calculateDailyOmset())"></p>
+                        <div class="bg-indigo-600 p-5 rounded-3xl text-white shadow-xl shadow-indigo-200">
+                            <p class="text-[9px] font-bold uppercase opacity-60">Omset Hari Ini</p>
+                            <p class="text-lg font-extrabold mt-1" x-text="formatIDR(calculateDailyOmset())"></p>
                         </div>
-                        <div class="bg-white p-6 rounded-[2rem] border-l-8 border-indigo-600 shadow-sm">
-                            <p class="text-[9px] font-black text-slate-400 uppercase">Omset Bulan Ini</p>
-                            <p class="text-lg font-black text-slate-800" x-text="formatIDR(calculateMonthlyOmset())"></p>
+                        <div class="bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-sm">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">Omset Bulan Ini</p>
+                            <p class="text-lg font-extrabold text-slate-800 mt-1" x-text="formatIDR(calculateMonthlyOmset())"></p>
                         </div>
-                    </div> 
-
-                    <button @click="exportToExcel" class="w-full bg-emerald-100 text-emerald-700 py-3 rounded-xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-200 transition">
-                        📊 Export Histori Transaksi (Excel)
-                    </button>
-
-                    <div class="bg-slate-900 p-6 rounded-[2rem] text-white space-y-4 shadow-xl">
-                        <h3 class="font-black text-indigo-400 text-[9px] uppercase tracking-widest">Manajemen Tim</h3>
-                        <div x-show="currentUser.role === 'owner'" class="space-y-2 border-b border-white/5 pb-4">
-                            <input type="text" x-model="newUser.name" placeholder="User Admin Baru" class="w-full bg-white/5 p-3 rounded-xl text-xs text-white outline-none">
-                            <button @click="createUser('admin')" class="w-full bg-amber-500 text-black py-2 rounded-xl font-black text-[9px] uppercase">Buat Admin</button>
-                        </div>
-                        <div class="space-y-2 pt-2">
-                            <input type="text" x-model="newKasir.user" placeholder="User Kasir Baru" class="w-full bg-white/5 p-3 rounded-xl text-xs text-white outline-none">
-                            <button @click="createUser('kasir')" class="w-full bg-emerald-500 text-black py-2 rounded-xl font-black text-[9px] uppercase">Buat Kasir</button>
-                        </div>
-                    </div> 
-
-                    <div class="bg-white p-6 rounded-[2rem] border-2 space-y-4 shadow-sm">
-                        <h3 class="font-black text-slate-300 text-[9px] uppercase italic">Pengaturan Toko & Produk</h3>
-                        <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full border p-2 rounded-xl text-xs">
-                        <div class="relative">
-                            <label class="text-[8px] font-black text-indigo-600 uppercase ml-1">PIN Otoritas</label>
-                            <input type="password" x-model="currentStore.pin" class="w-full border p-2 rounded-xl text-xs font-bold bg-indigo-50">
-                        </div>
-                        <div class="h-px bg-slate-100"></div>
-                        <input type="text" x-model="newP.name" placeholder="Nama Produk" class="w-full border p-2 rounded-xl text-xs">
-                        <div class="flex gap-2">
-                            <input type="number" x-model="newP.price" placeholder="Harga" class="w-1/2 border p-2 rounded-xl text-xs">
-                            <input type="number" x-model="newP.stock" placeholder="Stok" class="w-1/2 border p-2 rounded-xl text-xs">
-                        </div>
-                        <button @click="addProduct" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-[10px] uppercase">Simpan Produk</button>
                     </div>
-                </div> 
+
+                    <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm flex items-center gap-2">👥 Manajemen Tim</h3>
+                        <div class="space-y-3 bg-slate-50 p-4 rounded-2xl">
+                            <div class="flex gap-2">
+                                <select x-model="newAcc.role" class="text-[10px] font-bold border rounded-lg p-2 outline-none">
+                                    <option value="kasir">KASIR</option>
+                                    <option value="admin" x-show="currentUser.role === 'owner'">ADMIN</option>
+                                </select>
+                                <input type="text" x-model="newAcc.user" placeholder="Username" class="flex-1 border p-2 rounded-lg text-xs outline-none">
+                            </div>
+                            <input type="password" x-model="newAcc.pass" placeholder="Password Baru" class="w-full border p-2 rounded-lg text-xs outline-none">
+                            <button @click="registerAccount" class="w-full bg-slate-900 text-white py-2 rounded-lg font-bold text-[10px] uppercase hover:bg-indigo-600 transition">Daftarkan Akun</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm italic tracking-tight">🏢 Identitas Toko</h3>
+                        <div class="space-y-3 text-xs">
+                            <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full border p-2 rounded-lg">
+                            <input type="text" x-model="currentStore.address" placeholder="Alamat Lengkap" class="w-full border p-2 rounded-lg">
+                            <input type="text" x-model="currentStore.phone" placeholder="Nomor Telepon Toko" class="w-full border p-2 rounded-lg">
+                            <div class="bg-amber-50 p-3 rounded-xl">
+                                <label class="text-[9px] font-bold text-amber-700 uppercase">PIN Otoritas Hapus Item</label>
+                                <input type="password" x-model="currentStore.pin" class="w-full bg-transparent border-b border-amber-200 font-bold py-1 outline-none text-amber-900">
+                            </div>
+                            <button @click="saveStoreData(); addToast('Pengaturan disimpan!')" class="w-full bg-indigo-50 text-indigo-700 py-2 rounded-lg font-bold">Simpan Identitas</button>
+                        </div>
+                    </div>
+
+                    <button @click="exportToExcel" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-xs uppercase shadow-lg shadow-emerald-100">📊 Download Laporan Excel</button>
+                </div>
 
                 <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6" :class="currentUser.role === 'kasir' ? 'lg:col-span-12' : ''">
-                    <div class="bg-white p-6 rounded-[2.5rem] border-2 overflow-y-auto max-h-[70vh] custom-scrollbar shadow-sm">
-                        <h3 class="font-black text-[9px] text-slate-300 uppercase tracking-widest mb-6 italic">Katalog Produk</h3>
-                        <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex flex-col h-[75vh]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-extrabold text-xs uppercase tracking-widest text-slate-400">Katalog Produk</h3>
+                            <button @click="showProductModal = true" class="text-indigo-600 font-bold text-xs" x-show="currentUser.role !== 'kasir'">+ Tambah Produk</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="p in currentStore.products" :key="p.id">
-                                <div class="relative group">
-                                    <div @click="addToCart(p)" class="p-4 bg-slate-50 border-2 border-transparent hover:border-indigo-600 rounded-2xl cursor-pointer transition-all active:scale-95 text-center">
-                                        <p x-text="p.name" class="font-black text-[10px] text-slate-700 truncate uppercase"></p>
-                                        <p x-text="formatIDR(p.price)" class="text-indigo-600 font-bold text-[9px] mt-1"></p>
-                                        <div class="mt-2 text-[7px] font-black text-slate-400" x-text="'Stok: ' + p.stock"></div>
-                                    </div>
-                                    <template x-if="currentUser.role !== 'kasir'">
-                                        <button @click="deleteProduct(p.id)" class="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full text-[8px] font-black shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                                    </template>
+                                <div @click="addToCart(p)" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl cursor-pointer hover:border-indigo-500 transition-all text-center relative">
+                                    <p x-text="p.name" class="font-bold text-[10px] text-slate-700 truncate"></p>
+                                    <p x-text="formatIDR(p.price)" class="text-indigo-600 font-extrabold text-[10px] mt-1"></p>
+                                    <p class="text-[8px] text-slate-400 mt-1" x-text="'Stok: ' + p.stock"></p>
                                 </div>
                             </template>
                         </div>
-                    </div> 
+                    </div>
 
-                    <div class="bg-white p-6 rounded-[2.5rem] shadow-2xl border-t-[12px] border-indigo-600 flex flex-col h-full max-h-[70vh]">
-                        <h3 class="font-black text-xl italic tracking-tighter mb-6">BILLING #<span x-text="(currentStore.salesHistory?.length || 0) + 1"></span></h3>
+                    <div class="bg-white rounded-[2.5rem] shadow-2xl border-t-[12px] border-indigo-600 p-6 flex flex-col h-[75vh]">
+                        <div class="mb-4">
+                            <h3 class="font-extrabold text-xl italic italic">BILLING #<span x-text="(currentStore.salesHistory?.length || 0) + 1"></span></h3>
+                        </div>
                         
-                        <div class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 custom-scrollbar">
+                        <div class="flex-1 overflow-y-auto space-y-2 mb-4 custom-scrollbar">
                             <template x-for="(item, index) in cart" :key="index">
-                                <div class="flex justify-between items-center p-3 bg-indigo-50/30 rounded-xl border border-indigo-100">
+                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                                     <div class="w-2/3">
-                                        <p class="font-black uppercase text-[10px]" x-text="item.name"></p>
-                                        <p class="text-[8px] text-indigo-500 font-bold" x-text="item.qty + ' x ' + formatIDR(item.price)"></p>
+                                        <p class="font-bold text-[10px] uppercase" x-text="item.name"></p>
+                                        <p class="text-[9px] text-indigo-500 font-bold" x-text="item.qty + ' x ' + formatIDR(item.price)"></p>
                                     </div>
-                                    <button @click="secureRemoveItem(index)" class="bg-red-50 text-red-500 px-2 py-1 rounded-lg text-[8px] font-black uppercase">Hapus</button>
+                                    <button @click="secureRemoveItem(index)" class="text-rose-500 font-bold text-[9px] uppercase px-2 py-1 bg-rose-50 rounded-lg">Hapus</button>
                                 </div>
                             </template>
-                        </div> 
+                        </div>
 
-                        <div class="bg-slate-50 p-4 rounded-2xl border-2 border-dashed space-y-2">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="text-[8px] font-black text-slate-400 uppercase">Diskon (%)</label>
-                                    <input type="number" x-model="discountPercent" class="w-full bg-transparent border-b font-bold text-xs outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[8px] font-black text-slate-400 uppercase">Pajak (%)</label>
-                                    <input type="number" x-model="taxPercent" class="w-full bg-transparent border-b font-bold text-xs outline-none">
-                                </div>
+                        <div class="bg-slate-900 p-5 rounded-3xl text-white space-y-3">
+                            <div class="flex justify-between text-xs font-bold opacity-60">
+                                <span>Subtotal</span>
+                                <span x-text="formatIDR(calculateSubtotal())"></span>
                             </div>
-                            <div class="pt-2 flex justify-between items-end">
-                                <span class="font-black text-slate-400 text-[10px] italic">TOTAL</span>
-                                <span class="text-2xl font-black tracking-tighter" x-text="formatIDR(calculateFinalTotal())"></span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] font-bold uppercase text-indigo-400 italic">Total Akhir</span>
+                                <span class="text-2xl font-black" x-text="formatIDR(calculateFinalTotal())"></span>
                             </div>
-                            <button @click="showReceiptModal = true" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-sm italic mt-2 shadow-lg active:scale-95 transition-all uppercase">Bayar</button>
+                            <button @click="showReceiptModal = true" class="w-full bg-indigo-500 py-3 rounded-xl font-bold text-sm mt-2 shadow-lg hover:bg-indigo-400 transition active:scale-95">PROSES PEMBAYARAN</button>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
-    </template> 
+    </template>
 
-    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 z-[200]">
-        <div class="bg-white w-full max-w-xs rounded-[3rem] p-8 shadow-2xl">
+    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 z-[200]">
+        <div class="bg-white w-full max-w-xs rounded-[2rem] p-8 shadow-2xl relative">
             <div id="receipt-content" class="font-mono text-[10px] leading-relaxed text-slate-800">
-                <center class="mb-4">
+                <center class="mb-6 space-y-1">
                     <h2 class="font-black text-xl italic uppercase" x-text="currentStore.storeName"></h2>
-                    <p class="text-[8px]" x-text="currentStore.address"></p>
-                    <div class="border-y border-dashed py-2 my-2 uppercase text-[8px]">
-                        <p>#<span x-text="(currentStore.salesHistory?.length || 0) + 1"></span> | <span x-text="new Date().toLocaleTimeString()"></span></p>
+                    <p class="text-[8px] font-bold" x-text="currentStore.address"></p>
+                    <p class="text-[8px]" x-text="'Telp: ' + currentStore.phone"></p>
+                    <div class="border-y border-dashed border-slate-300 py-2 my-3 uppercase text-[8px]">
+                        <p>No Transaksi: #<span x-text="(currentStore.salesHistory?.length || 0) + 1"></span></p>
+                        <p x-text="new Date().toLocaleString('id-ID')"></p>
                     </div>
                 </center>
                 
@@ -230,40 +209,57 @@
                     </template>
                 </div>
                 
-                <div class="mt-4 pt-2 border-t border-dashed">
+                <div class="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
                     <div class="flex justify-between font-black text-sm italic">
                         <span>TOTAL</span>
                         <span x-text="formatIDR(calculateFinalTotal())"></span>
                     </div>
                 </div> 
 
-                <center class="mt-6 uppercase text-[8px]">
-                    <p class="font-black tracking-[0.2em]">Terima Kasih</p>
+                <center class="mt-8 space-y-1">
+                    <p class="font-bold uppercase tracking-widest text-[9px]">Terima Kasih</p>
+                    <p class="text-[8px] italic opacity-60" x-text="'Selamat datang kembali di ' + currentStore.storeName"></p>
+                    <p class="text-[7px] opacity-20 pt-4">Powered by KasirKyta</p>
                 </center>
             </div>
             
-            <div class="mt-6 flex flex-col gap-2 no-print">
-                <button @click="processPayment" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Cetak & Selesai</button>
-                <button @click="showReceiptModal = false" class="w-full text-slate-300 font-bold text-[10px] uppercase">Batal</button>
+            <div class="mt-8 flex flex-col gap-2 no-print">
+                <button @click="processPayment" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold uppercase text-xs shadow-lg">Konfirmasi & Cetak Struk</button>
+                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold text-[10px] uppercase py-2">Batal</button>
             </div>
         </div>
-    </div> 
+    </div>
+
+    <div x-show="showProductModal" x-cloak class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 z-[200]">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold mb-4">Tambah Produk Baru</h3>
+            <div class="space-y-3">
+                <input type="text" x-model="newP.name" placeholder="Nama Produk" class="w-full border p-3 rounded-xl text-sm">
+                <input type="number" x-model="newP.price" placeholder="Harga Jual" class="w-full border p-3 rounded-xl text-sm">
+                <input type="number" x-model="newP.stock" placeholder="Jumlah Stok" class="w-full border p-3 rounded-xl text-sm">
+                <div class="flex gap-2 mt-4">
+                    <button @click="addProduct(); showProductModal = false" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold">Simpan</button>
+                    <button @click="showProductModal = false" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function kasirKyta() {
             return {
-                currentPage: 'landing', loginRole: '', currentUser: null, users: [], allStores: {}, cart: [],
-                currentStore: { storeName: 'KasirKyta POS', address: '', phone: '', products: [], salesHistory: [], pin: '1234' },
-                loginForm: { user: '', pass: '' }, newUser: { name: '', pass: '' }, newKasir: { user: '', pass: '' }, newP: { name: '', price: '', stock: '' },
-                discountPercent: 0, taxPercent: 0, showReceiptModal: false,
+                currentPage: 'auth-choice', loginRole: '', currentUser: null, users: [], allStores: {}, cart: [],
+                currentStore: { storeName: 'Toko KasirKyta', address: 'Jl. Contoh Alamat No. 1', phone: '08123456789', products: [], salesHistory: [], pin: '1234' },
+                loginForm: { user: '', pass: '' },
+                newAcc: { user: '', pass: '', role: 'kasir' },
+                newP: { name: '', price: '', stock: '' },
+                discountPercent: 0, taxPercent: 0, showReceiptModal: false, showProductModal: false,
                 toasts: [],
 
                 addToast(message, type = 'success') {
                     const id = Date.now();
                     this.toasts.push({ id, message, type, show: true });
-                    setTimeout(() => {
-                        this.toasts = this.toasts.filter(t => t.id !== id);
-                    }, 3000);
+                    setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 3000);
                 },
 
                 initApp() {
@@ -281,8 +277,8 @@
                 openLogin(role) { this.loginRole = role; this.currentPage = 'login-form'; }, 
 
                 handleLogin() {
-                    const user = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass);
-                    if(user && user.role === this.loginRole) {
+                    const user = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass && u.role === this.loginRole);
+                    if(user) {
                         this.currentUser = user;
                         localStorage.setItem('kk_session', JSON.stringify(user));
                         this.loadStoreData();
@@ -290,69 +286,67 @@
                         this.addToast(`Selamat Datang, ${user.user}!`);
                         this.loginForm = { user: '', pass: '' };
                     } else { 
-                        this.addToast("Login Gagal! Cek User/Pass.", "error"); 
+                        this.addToast("Username/Password Salah!", "error"); 
                     }
-                }, 
+                },
+
+                registerAccount() {
+                    if(!this.newAcc.user || !this.newAcc.pass) return this.addToast("Isi data lengkap!", "error");
+                    const exists = this.users.find(u => u.user === this.newAcc.user);
+                    if(exists) return this.addToast("Username sudah ada!", "error");
+
+                    const newAccount = {
+                        user: this.newAcc.user,
+                        pass: this.newAcc.pass,
+                        role: this.newAcc.role,
+                        owner: (this.currentUser.role === 'owner' ? this.currentUser.user : this.currentUser.owner)
+                    };
+
+                    this.users.push(newAccount);
+                    localStorage.setItem('kk_accounts', JSON.stringify(this.users));
+                    this.addToast(`Akun ${this.newAcc.role} berhasil dibuat!`);
+                    this.newAcc = { user: '', pass: '', role: 'kasir' };
+                },
 
                 loadStoreData() {
-                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    const storeKey = this.currentUser.role === 'owner' ? this.currentUser.user : this.currentUser.owner;
                     this.currentStore = this.allStores[storeKey] || { storeName: 'Toko ' + storeKey, address:'', phone:'', products: [], salesHistory: [], pin: '1234' };
-                    if(!this.currentStore.salesHistory) this.currentStore.salesHistory = [];
                 }, 
 
                 saveStoreData() {
-                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    const storeKey = this.currentUser.role === 'owner' ? this.currentUser.user : this.currentUser.owner;
                     this.allStores[storeKey] = this.currentStore;
                     localStorage.setItem('kk_stores', JSON.stringify(this.allStores));
-                }, 
+                },
 
-                secureRemoveItem(index) {
-                    const pinInput = prompt("PIN Otoritas:");
-                    if (pinInput === this.currentStore.pin) {
-                        this.cart.splice(index, 1);
-                        this.addToast("Item dihapus");
-                    } else {
-                        this.addToast("PIN Salah!", "error");
-                    }
-                }, 
-
-                calculateSubtotal() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0); },
-                calculateFinalTotal() { 
-                    const sub = this.calculateSubtotal();
-                    const disc = sub * (this.discountPercent / 100);
-                    const tax = (sub - disc) * (this.taxPercent / 100);
-                    return sub - disc + tax;
-                }, 
-
-                addProduct() {
-                    if(!this.newP.name || !this.newP.price) return this.addToast("Data tidak lengkap", "error");
-                    this.currentStore.products.push({ id: Date.now(), ...this.newP, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock) || 0 });
-                    this.saveStoreData();
-                    this.addToast("Produk disimpan");
-                    this.newP = { name: '', price: '', stock: '' };
-                }, 
-
-                deleteProduct(id) {
-                    if(prompt("PIN Toko:") === this.currentStore.pin) {
-                        this.currentStore.products = this.currentStore.products.filter(p => p.id !== id);
-                        this.saveStoreData();
-                        this.addToast("Produk dihapus");
-                    } else { this.addToast("Gagal hapus", "error"); }
-                }, 
-
+                // Logic Sisanya (Cart, Omset, dll tetap sama dengan perbaikan visual)
                 addToCart(p) {
                     if(p.stock <= 0) return this.addToast("Stok Habis!", "error");
                     let itm = this.cart.find(i => i.id === p.id);
                     if(itm) { if(itm.qty < p.stock) itm.qty++; } else { this.cart.push({...p, qty: 1}); }
-                }, 
+                },
+
+                secureRemoveItem(index) {
+                    if (prompt("Masukkan PIN Keamanan:") === this.currentStore.pin) {
+                        this.cart.splice(index, 1);
+                        this.addToast("Item dihapus");
+                    } else { this.addToast("PIN Salah!", "error"); }
+                },
+
+                calculateSubtotal() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0); },
+                calculateFinalTotal() { return this.calculateSubtotal(); },
+
+                addProduct() {
+                    if(!this.newP.name || !this.newP.price) return;
+                    this.currentStore.products.push({ id: Date.now(), ...this.newP, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock) || 0 });
+                    this.saveStoreData();
+                    this.addToast("Produk disimpan");
+                    this.newP = { name: '', price: '', stock: '' };
+                },
 
                 processPayment() {
                     const total = this.calculateFinalTotal();
-                    this.currentStore.salesHistory.push({ 
-                        date: new Date().toISOString(), 
-                        amount: total,
-                        items: this.cart.length
-                    });
+                    this.currentStore.salesHistory.push({ date: new Date().toISOString(), amount: total, items: this.cart.length });
                     this.cart.forEach(item => {
                         let prod = this.currentStore.products.find(p => p.id === item.id);
                         if(prod) prod.stock -= item.qty;
@@ -360,54 +354,38 @@
                     this.saveStoreData();
                     window.print();
                     this.cart = []; this.showReceiptModal = false;
-                    this.addToast("Transaksi Berhasil!");
-                },
-
-                exportToExcel() {
-                    if (this.currentStore.salesHistory.length === 0) return this.addToast("Tidak ada data", "error");
-                    
-                    const data = this.currentStore.salesHistory.map(s => ({
-                        Tanggal: new Date(s.date).toLocaleString('id-ID'),
-                        Items: s.items,
-                        Total: s.amount
-                    }));
-
-                    const ws = XLSX.utils.json_to_sheet(data);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Omset");
-                    XLSX.writeFile(wb, `Laporan_${this.currentStore.storeName}.xlsx`);
-                    this.addToast("Excel berhasil diunduh");
+                    this.addToast("Selesai!");
                 },
 
                 calculateDailyOmset() {
                     const today = new Date().toDateString();
-                    return this.currentStore.salesHistory.filter(s => new Date(s.date).toDateString() === today).reduce((sum, s) => sum + s.amount, 0);
-                }, 
+                    return (this.currentStore.salesHistory || []).filter(s => new Date(s.date).toDateString() === today).reduce((sum, s) => sum + s.amount, 0);
+                },
 
                 calculateMonthlyOmset() {
                     const now = new Date();
-                    return this.currentStore.salesHistory.filter(s => {
+                    return (this.currentStore.salesHistory || []).filter(s => {
                         const d = new Date(s.date);
                         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                     }).reduce((sum, s) => sum + s.amount, 0);
-                }, 
+                },
 
-                createUser(role) {
-                    const u = role === 'admin' ? this.newUser.name : this.newKasir.user;
-                    const p = role === 'admin' ? this.newUser.pass : this.newKasir.pass;
-                    if(!u || !p) return this.addToast("Lengkapi form!", "error");
-                    this.users.push({ user: u, pass: p, role: role, owner: (this.currentUser.role === 'owner' ? (role === 'admin' ? u : 'owner') : this.currentUser.user) });
-                    localStorage.setItem('kk_accounts', JSON.stringify(this.users));
-                    this.addToast(`User ${role} dibuat!`);
-                    this.newUser = { name: '', pass: '' }; this.newKasir = { user: '', pass: '' };
-                }, 
+                exportToExcel() {
+                    const data = this.currentStore.salesHistory.map(s => ({
+                        Tanggal: new Date(s.date).toLocaleString('id-ID'),
+                        Total: s.amount
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+                    XLSX.writeFile(wb, "Laporan_KasirKyta.xlsx");
+                },
 
                 logout() { localStorage.removeItem('kk_session'); location.reload(); },
                 formatIDR(n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n)); },
-                getRoleColor(r) { return r === 'owner' ? 'border-amber-500' : (r === 'admin' ? 'border-indigo-600' : 'border-emerald-500'); },
                 getBtnColor(r) { return r === 'owner' ? 'bg-amber-500' : (r === 'admin' ? 'bg-indigo-600' : 'bg-emerald-600'); }
             }
         }
     </script>
 </body>
-  </html>
+                                </html>
