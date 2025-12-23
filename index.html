@@ -3,107 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasirKyta Premium - AI Powered POS</title>
+    <title>KasirKyta Premium - AI POS System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         [x-cloak] { display: none !important; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark-glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.1); }
         @media print {
             body * { visibility: hidden; }
             #receipt-content, #receipt-content * { visibility: visible; }
-            #receipt-content { position: fixed; left: 0; top: 0; width: 100%; border:none; }
+            #receipt-content { position: fixed; left: 0; top: 0; width: 100%; }
         }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-900" x-data="kasirKyta()" x-init="initApp()">
+<body class="bg-slate-50 text-slate-900" x-data="kasirKyta()" x-init="initApp()">
 
-    <div class="fixed top-5 right-5 z-[300] flex flex-col gap-2">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="toast.show" x-transition class="px-5 py-3 rounded-2xl shadow-2xl text-white font-bold text-sm flex items-center gap-3" :class="toast.type === 'success' ? 'bg-indigo-600' : 'bg-rose-500'">
-                <span x-text="toast.message"></span>
-            </div>
-        </template>
-    </div>
+    <nav class="fixed top-0 w-full z-[100] dark-glass px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-black text-white italic">K</div>
+            <span class="font-black text-lg tracking-tighter text-white italic">KasirKyta<span class="text-indigo-500">.</span></span>
+        </div>
+        <div x-show="currentPage === 'dashboard'" class="flex items-center gap-4">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" x-text="currentUser.user"></span>
+            <button @click="logout" class="text-rose-400 font-bold text-[10px] hover:text-rose-300">LOGOUT</button>
+        </div>
+    </nav>
 
     <template x-if="currentPage === 'landing'">
-        <div class="min-h-screen bg-white">
-            <nav class="flex justify-between items-center px-10 py-6">
-                <div class="text-2xl font-black italic tracking-tighter text-indigo-600">KasirKyta.</div>
-                <button @click="currentPage = 'auth-choice'" class="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold text-sm hover:shadow-lg hover:shadow-indigo-200 transition">Mulai Sekarang</button>
-            </nav>
+        <div class="min-h-screen bg-[#020617] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
             
-            <main class="max-w-6xl mx-auto px-6 pt-20 text-center">
-                <span class="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest">AI-Powered POS System</span>
-                <h1 class="text-5xl md:text-7xl font-extrabold mt-6 leading-tight">Kelola Toko Lebih <br><span class="text-indigo-600">Pintar dengan AI.</span></h1>
-                <p class="mt-6 text-slate-500 text-lg max-w-2xl mx-auto">Satu platform untuk semua kebutuhan bisnismu. Dari manajemen stok otomatis hingga rekomendasi cerdas untuk meningkatkan penjualan.</p>
-                
-                <div class="mt-10 flex flex-wrap justify-center gap-4">
-                    <button @click="currentPage = 'auth-choice'" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-indigo-600 transition shadow-xl">Buka Dashboard →</button>
-                    <a href="#features" class="bg-white border-2 border-slate-100 text-slate-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-50 transition">Lihat Fitur</a>
+            <div class="z-10 text-center max-w-4xl">
+                <h1 class="text-5xl md:text-8xl font-black text-white leading-none tracking-tighter mb-8">
+                    SISTEM KASIR <br> <span class="text-indigo-500 italic">MASA DEPAN.</span>
+                </h1>
+                <p class="text-slate-400 text-lg md:text-xl mb-12 max-w-2xl mx-auto">
+                    Kelola bisnismu dengan integrasi AI cerdas, laporan otomatis, dan antarmuka premium yang memukau.
+                </p>
+                <div class="flex flex-wrap justify-center gap-6">
+                    <button @click="currentPage = 'auth-choice'" class="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-indigo-500 transition shadow-2xl shadow-indigo-500/20">
+                        MULAI SEKARANG
+                    </button>
                 </div>
+            </div>
 
-                <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-left" id="features">
-                    <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
-                        <div class="text-3xl mb-4">🚀</div>
-                        <h3 class="font-bold text-xl mb-2">Manajemen Cepat</h3>
-                        <p class="text-slate-500 text-sm">Transaksi kilat dengan antarmuka yang sangat intuitif untuk kasir Anda.</p>
-                    </div>
-                    <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
-                        <div class="text-3xl mb-4">🤖</div>
-                        <h3 class="font-bold text-xl mb-2">AI Forecasting</h3>
-                        <p class="text-slate-500 text-sm">Beritahu Anda kapan harus belanja stok sebelum barang benar-benar habis.</p>
-                    </div>
-                    <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
-                        <div class="text-3xl mb-4">📊</div>
-                        <h3 class="font-bold text-xl mb-2">Laporan Akurat</h3>
-                        <p class="text-slate-500 text-sm">Analisis penjualan harian dan bulanan yang bisa diunduh ke Excel instan.</p>
-                    </div>
-                </div>
-            </main>
+            <div class="grid grid-cols-3 gap-8 mt-24 z-10 border-t border-white/5 pt-12">
+                <div class="text-center"><p class="text-white font-bold">AI Stock</p><p class="text-slate-500 text-xs">Automated Alerts</p></div>
+                <div class="text-center"><p class="text-white font-bold">Cloud Sync</p><p class="text-slate-500 text-xs">Real-time Data</p></div>
+                <div class="text-center"><p class="text-white font-bold">Security</p><p class="text-slate-500 text-xs">PIN Protected</p></div>
+            </div>
         </div>
     </template>
 
     <template x-if="currentPage === 'auth-choice' || currentPage === 'login-form'">
-        <div class="min-h-screen flex items-center justify-center bg-[#0f172a] p-4 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]"></div>
-            
-            <div class="w-full max-w-[400px] z-10">
+        <div class="min-h-screen bg-[#020617] flex items-center justify-center p-6 pt-20">
+            <div class="w-full max-w-[400px]">
                 <div x-show="currentPage === 'auth-choice'" class="space-y-4">
-                    <div class="text-center mb-8">
-                        <h2 class="text-white text-3xl font-bold">Pilih Akses</h2>
-                        <p class="text-slate-400 text-sm mt-2">Selamat datang kembali di KasirKyta</p>
-                    </div>
+                    <h2 class="text-white text-2xl font-black text-center mb-8 uppercase tracking-widest">Akses Portal</h2>
                     <template x-for="role in ['owner', 'admin', 'kasir']">
-                        <button @click="openLogin(role)" class="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-5 rounded-3xl flex items-center gap-4 transition group text-left">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl bg-white/5 group-hover:bg-indigo-600 transition" x-text="role === 'owner' ? '👑' : (role === 'admin' ? '⚙️' : '🛒')"></div>
-                            <div>
-                                <p class="text-white font-bold capitalize" x-text="role"></p>
-                                <p class="text-white/40 text-xs">Masuk sebagai <span x-text="role"></span></p>
-                            </div>
+                        <button @click="openLogin(role)" class="w-full bg-white/5 border border-white/10 p-6 rounded-[2rem] flex items-center justify-between group hover:bg-indigo-600 transition duration-500">
+                            <span class="text-white font-bold capitalize text-lg" x-text="role"></span>
+                            <span class="text-white/20 group-hover:translate-x-2 transition">→</span>
                         </button>
                     </template>
-                    <button @click="currentPage = 'landing'" class="w-full text-slate-500 text-xs font-bold uppercase mt-4">Kembali ke Beranda</button>
                 </div>
 
-                <div x-show="currentPage === 'login-form'" class="bg-white rounded-[3rem] p-10 shadow-2xl">
-                    <h2 class="text-2xl font-black mb-6 uppercase tracking-tight" x-text="loginRole + ' Login'"></h2>
+                <div x-show="currentPage === 'login-form'" class="bg-white rounded-[3rem] p-10">
+                    <h2 class="text-2xl font-black mb-8 italic capitalize" x-text="loginRole + ' Login'"></h2>
                     <div class="space-y-5">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
-                            <input type="text" x-model="loginForm.user" class="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                            <input type="password" x-model="loginForm.pass" class="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition">
-                        </div>
-                        <button @click="handleLogin" class="w-full py-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all mt-4" :class="getBtnColor(loginRole)">MASUK SISTEM</button>
-                        <button @click="currentPage = 'auth-choice'" class="w-full text-slate-400 font-bold text-[10px] uppercase">Ganti Role</button>
+                        <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
+                        <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
+                        <button @click="handleLogin" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black mt-4 shadow-xl">MASUK</button>
+                        <button @click="currentPage = 'auth-choice'" class="w-full text-slate-400 text-[10px] font-bold uppercase tracking-widest">Kembali</button>
                     </div>
                 </div>
             </div>
@@ -111,103 +85,99 @@
     </template>
 
     <template x-if="currentPage === 'dashboard'">
-        <div class="min-h-screen pt-20 flex flex-col">
-            <nav class="fixed top-0 w-full glass border-b z-[50] px-8 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <span class="font-black text-2xl italic tracking-tighter text-indigo-600">KasirKyta</span>
-                    <span class="px-3 py-1 rounded-full text-[9px] font-black text-white uppercase" :class="getBtnColor(currentUser.role)" x-text="currentUser.role"></span>
-                </div>
-                <button @click="logout" class="bg-rose-50 text-rose-600 px-5 py-2 rounded-xl font-bold text-[10px] hover:bg-rose-600 hover:text-white transition">LOGOUT</button>
-            </nav>
-
-            <main class="p-8 grid grid-cols-12 gap-8">
+        <div class="min-h-screen pt-20 p-8">
+            <main class="max-w-7xl mx-auto grid grid-cols-12 gap-8">
+                
                 <div class="col-span-12 lg:col-span-4 space-y-6" x-show="currentUser.role !== 'kasir'">
-                    <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
-                        <h3 class="font-bold text-sm mb-4 flex items-center gap-2">🤖 AI Stock Monitor</h3>
-                        <div class="space-y-3">
-                            <template x-for="p in aiLowStockAlerts()" :key="p.id">
-                                <div class="p-3 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3">
-                                    <span class="text-lg">⚠️</span>
-                                    <div>
-                                        <p class="font-bold text-[10px] text-amber-800 uppercase" x-text="p.name"></p>
-                                        <p class="text-[9px] text-amber-600">Stok kritis (<span x-text="p.stock"></span>). AI memprediksi segera habis!</p>
-                                    </div>
-                                </div>
-                            </template>
-                            <div x-show="aiLowStockAlerts().length === 0" class="text-center py-4 text-slate-400 text-[10px] font-medium">Semua stok aman terkendali.</div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100">
+                            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Omset Hari Ini</p>
+                            <h2 class="text-3xl font-black mt-2" x-text="formatIDR(calculateDailyOmset())"></h2>
+                        </div>
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Bulan Ini</p>
+                            <h2 class="text-2xl font-black text-slate-800 mt-2" x-text="formatIDR(calculateMonthlyOmset())"></h2>
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-sm">👥 Manajemen Akun</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" x-model="newAcc.user" placeholder="User" class="bg-slate-50 p-3 rounded-xl text-xs outline-none focus:ring-2 ring-indigo-500/20">
-                            <input type="password" x-model="newAcc.pass" placeholder="Pass" class="bg-slate-50 p-3 rounded-xl text-xs outline-none focus:ring-2 ring-indigo-500/20">
+                    <div class="bg-white p-6 rounded-[2.5rem] border border-slate-200">
+                        <h3 class="font-black text-xs uppercase tracking-widest text-indigo-500 mb-4 flex items-center gap-2">🤖 AI Forecast</h3>
+                        <div class="space-y-2">
+                            <template x-for="p in aiLowStockAlerts()" :key="p.id">
+                                <div class="p-4 bg-rose-50 rounded-2xl flex items-center gap-3">
+                                    <div class="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></div>
+                                    <span class="text-[10px] font-bold text-rose-700" x-text="p.name + ' tinggal ' + p.stock + ' unit!'"></span>
+                                </div>
+                            </template>
                         </div>
-                        <select x-model="newAcc.role" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                    </div>
+
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 space-y-4">
+                        <h3 class="font-black text-sm italic">Buat Akses Baru.</h3>
+                        <input type="text" x-model="newAcc.user" placeholder="Username" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                        <input type="password" x-model="newAcc.pass" placeholder="Password" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                        <select x-model="newAcc.role" class="w-full bg-slate-50 p-3 rounded-xl text-xs">
                             <option value="kasir">Akses Kasir</option>
                             <option value="admin" x-show="currentUser.role === 'owner'">Akses Admin</option>
                         </select>
-                        <button @click="registerAccount" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-indigo-600 transition">Buat Akun Baru</button>
+                        <button @click="registerAccount" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-[10px] uppercase">Daftarkan Tim</button>
                     </div>
 
-                    <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-sm">🏢 Identitas Toko</h3>
-                        <div class="space-y-2">
-                            <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
-                            <input type="text" x-model="currentStore.address" placeholder="Alamat" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
-                            <input type="text" x-model="currentStore.phone" placeholder="No. Telepon" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 space-y-4">
+                        <h3 class="font-black text-sm italic">Identitas Toko.</h3>
+                        <input type="text" x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                        <input type="text" x-model="currentStore.address" placeholder="Alamat" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                        <input type="text" x-model="currentStore.phone" placeholder="No. Telp" class="w-full bg-slate-50 p-3 rounded-xl text-xs outline-none">
+                        <div class="bg-amber-50 p-4 rounded-2xl">
+                            <p class="text-[9px] font-bold text-amber-700 uppercase mb-2">PIN Otoritas Hapus</p>
+                            <input type="password" x-model="currentStore.pin" class="w-full bg-transparent border-b border-amber-200 outline-none font-bold text-amber-900">
                         </div>
-                        <button @click="saveStoreData(); addToast('Identitas diperbarui!')" class="w-full bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px]">Simpan Data</button>
+                        <button @click="saveStoreData(); alert('Tersimpan!')" class="w-full bg-indigo-50 text-indigo-700 py-3 rounded-xl font-bold text-[10px]">Simpan Pengaturan</button>
                     </div>
                 </div>
 
-                <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8" :class="currentUser.role === 'kasir' ? 'lg:col-span-12 max-w-6xl mx-auto' : ''">
-                    <div class="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col h-[75vh]">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Inventory</h3>
-                            <button @click="showProductModal = true" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl font-bold text-[10px]" x-show="currentUser.role !== 'kasir'">+ Produk</button>
+                <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8" :class="currentUser.role === 'kasir' ? 'lg:col-span-12' : ''">
+                    <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-200 flex flex-col h-[80vh]">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="font-black text-lg italic uppercase tracking-tighter">Inventory.</h2>
+                            <button @click="showProductModal = true" x-show="currentUser.role !== 'kasir'" class="bg-slate-100 px-4 py-2 rounded-xl text-[10px] font-bold">+ Produk</button>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="grid grid-cols-2 gap-4 overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="p in currentStore.products" :key="p.id">
-                                <div @click="addToCart(p)" class="p-5 bg-slate-50 border-2 border-transparent hover:border-indigo-500 rounded-[2rem] cursor-pointer transition-all relative overflow-hidden group">
-                                    <div x-show="p.stock <= 5" class="absolute top-0 right-0 bg-rose-500 text-[8px] text-white px-3 py-1 font-bold rounded-bl-xl">LOW</div>
-                                    <p x-text="p.name" class="font-bold text-xs text-slate-800 truncate"></p>
-                                    <p x-text="formatIDR(p.price)" class="text-indigo-600 font-black text-xs mt-1"></p>
-                                    <p class="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-tighter" x-text="'Stok: ' + p.stock"></p>
+                                <div @click="addToCart(p)" class="p-6 bg-slate-50 rounded-[2rem] hover:bg-indigo-600 hover:text-white transition group cursor-pointer border border-slate-100">
+                                    <p class="font-black text-xs uppercase" x-text="p.name"></p>
+                                    <p class="text-indigo-600 group-hover:text-white font-bold text-sm mt-1" x-text="formatIDR(p.price)"></p>
+                                    <p class="text-[9px] mt-2 opacity-40 font-bold" x-text="'Stok: ' + p.stock"></p>
                                 </div>
                             </template>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-[3rem] shadow-2xl border-t-[16px] border-indigo-600 p-8 flex flex-col h-[75vh]">
-                        <h3 class="font-black text-2xl italic mb-6">Order.</h3>
-                        
-                        <div class="flex-1 overflow-y-auto space-y-3 mb-4 custom-scrollbar">
+                    <div class="bg-white rounded-[3rem] shadow-2xl border-t-[12px] border-indigo-600 p-8 flex flex-col h-[80vh]">
+                        <h2 class="font-black text-2xl italic mb-6">Order #<span x-text="currentStore.salesHistory.length + 1"></span></h2>
+                        <div class="flex-1 overflow-y-auto space-y-4 mb-4 custom-scrollbar">
                             <template x-for="(item, index) in cart" :key="index">
-                                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 group">
+                                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
                                     <div class="w-2/3">
-                                        <p class="font-bold text-xs uppercase" x-text="item.name"></p>
-                                        <p class="text-[10px] text-indigo-500 font-bold" x-text="item.qty + ' x ' + formatIDR(item.price)"></p>
+                                        <p class="font-black text-[10px] uppercase" x-text="item.name"></p>
+                                        <p class="text-[10px] font-bold text-indigo-500" x-text="item.qty + ' x ' + formatIDR(item.price)"></p>
                                     </div>
-                                    <button @click="secureRemoveItem(index)" class="opacity-0 group-hover:opacity-100 text-rose-500 font-bold text-[9px] uppercase px-3 py-1 bg-white rounded-lg transition shadow-sm">Hapus</button>
+                                    <button @click="secureRemoveItem(index)" class="text-rose-500 font-black text-[9px] p-2">HAPUS</button>
                                 </div>
                             </template>
-                            
-                            <div x-show="cart.length > 0 && getAiRecommendation()" class="mt-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">💡 AI Saran Tambahan</p>
-                                <p class="text-[11px] font-bold text-indigo-900">Pelanggan biasanya juga membeli <span class="underline decoration-indigo-300" x-text="getAiRecommendation()?.name"></span>. Tawarkan sekarang!</p>
+
+                            <div x-show="cart.length > 0 && getAiRecommendation()" class="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                                <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">💡 AI Recommend</p>
+                                <p class="text-[10px] font-bold mt-1 text-indigo-900">Jangan lupa tawarkan <span class="underline" x-text="getAiRecommendation().name"></span>!</p>
                             </div>
                         </div>
 
-                        <div class="bg-slate-900 p-6 rounded-[2.5rem] text-white space-y-4">
-                            <div class="flex justify-between items-end">
-                                <div>
-                                    <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Total Bayar</p>
-                                    <p class="text-3xl font-black" x-text="formatIDR(calculateSubtotal())"></p>
-                                </div>
+                        <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-400">Total Akhir</span>
+                                <span class="text-2xl font-black" x-text="formatIDR(calculateSubtotal())"></span>
                             </div>
-                            <button @click="showReceiptModal = true" class="w-full bg-indigo-600 py-4 rounded-2xl font-bold text-sm shadow-xl hover:bg-indigo-500 transition active:scale-95">SELESAIKAN PEMBAYARAN</button>
+                            <button @click="showReceiptModal = true" class="w-full bg-indigo-600 py-4 rounded-2xl font-black text-sm">BAYAR SEKARANG</button>
                         </div>
                     </div>
                 </div>
@@ -215,61 +185,50 @@
         </div>
     </template>
 
-    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 z-[200]">
-        <div class="bg-white w-full max-w-xs rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
-            <div id="receipt-content" class="font-mono text-[11px] leading-relaxed text-slate-800">
-                <center class="mb-8 space-y-1">
-                    <h2 class="font-black text-2xl italic uppercase tracking-tighter" x-text="currentStore.storeName"></h2>
-                    <p class="text-[9px] font-bold text-slate-500" x-text="currentStore.address"></p>
-                    <p class="text-[9px] text-slate-500" x-text="'Telp: ' + currentStore.phone"></p>
-                    <div class="border-y border-dashed border-slate-200 py-3 my-4 uppercase text-[9px] text-slate-400">
-                        <p x-text="'INV/' + Date.now()"></p>
-                        <p x-text="new Date().toLocaleString('id-ID')"></p>
+    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 z-[200]">
+        <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-10 shadow-2xl">
+            <div id="receipt-content" class="font-mono text-[10px] text-slate-800">
+                <center class="mb-6 space-y-1">
+                    <h2 class="font-black text-xl italic uppercase" x-text="currentStore.storeName"></h2>
+                    <p x-text="currentStore.address"></p>
+                    <p x-text="'Telp: ' + currentStore.phone"></p>
+                    <div class="border-y border-dashed py-3 my-4">
+                        <p x-text="new Date().toLocaleString()"></p>
                     </div>
                 </center>
-                
                 <div class="space-y-2">
                     <template x-for="item in cart">
-                        <div class="flex justify-between uppercase">
-                            <span class="w-2/3" x-text="item.name + ' x' + item.qty"></span>
+                        <div class="flex justify-between">
+                            <span x-text="item.name + ' x' + item.qty"></span>
                             <span x-text="formatIDR(item.price * item.qty)"></span>
                         </div>
                     </template>
                 </div>
-                
-                <div class="mt-6 pt-6 border-t-2 border-dashed border-slate-100">
-                    <div class="flex justify-between font-black text-lg italic">
+                <div class="border-t-2 border-dashed mt-4 pt-4">
+                    <div class="flex justify-between font-black text-sm">
                         <span>TOTAL</span>
                         <span x-text="formatIDR(calculateSubtotal())"></span>
                     </div>
-                </div> 
-
-                <center class="mt-10 space-y-2">
-                    <p class="font-black uppercase tracking-[0.3em] text-[10px]">Terima Kasih</p>
-                    <p class="text-[9px] text-slate-400 italic">"Senyum Anda Adalah Kebahagiaan Kami"</p>
-                    <div class="w-12 h-1 bg-slate-100 rounded-full mt-4 mx-auto"></div>
+                </div>
+                <center class="mt-8 space-y-2">
+                    <p class="font-black uppercase tracking-widest">Terima Kasih</p>
+                    <p class="italic text-[8px] opacity-60">Barang yang sudah dibeli tidak dapat ditukar.</p>
                 </center>
             </div>
-            
-            <div class="mt-8 flex flex-col gap-3 no-print">
-                <button @click="processPayment" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold uppercase text-xs">Cetak Struk & Selesai</button>
-                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold text-[10px] uppercase">Kembali</button>
+            <div class="mt-8 space-y-3 no-print">
+                <button @click="processPayment" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs">CETAK & SELESAI</button>
+                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold text-[10px]">BATAL</button>
             </div>
         </div>
     </div>
 
-    <div x-show="showProductModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-6 z-[200]">
-        <div class="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl">
-            <h3 class="text-2xl font-black mb-6 italic">Produk Baru.</h3>
-            <div class="space-y-4">
-                <input type="text" x-model="newP.name" placeholder="Nama Barang" class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500/20">
-                <input type="number" x-model="newP.price" placeholder="Harga Jual (Rp)" class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500/20">
-                <input type="number" x-model="newP.stock" placeholder="Stok Awal" class="w-full bg-slate-50 p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500/20">
-                <div class="flex gap-3 mt-4">
-                    <button @click="addProduct(); showProductModal = false" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold">Simpan</button>
-                    <button @click="showProductModal = false" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold">Batal</button>
-                </div>
-            </div>
+    <div x-show="showProductModal" x-cloak class="fixed inset-0 bg-black/60 flex items-center justify-center p-6 z-[200]">
+        <div class="bg-white p-10 rounded-[3rem] w-full max-w-sm shadow-2xl space-y-4">
+            <h3 class="text-xl font-black italic">Tambah Barang.</h3>
+            <input type="text" x-model="newP.name" placeholder="Nama Barang" class="w-full bg-slate-50 p-4 rounded-xl outline-none">
+            <input type="number" x-model="newP.price" placeholder="Harga Jual" class="w-full bg-slate-50 p-4 rounded-xl outline-none">
+            <input type="number" x-model="newP.stock" placeholder="Stok" class="w-full bg-slate-50 p-4 rounded-xl outline-none">
+            <button @click="addProduct(); showProductModal = false" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black">SIMPAN</button>
         </div>
     </div>
 
@@ -277,37 +236,22 @@
         function kasirKyta() {
             return {
                 currentPage: 'landing', loginRole: '', currentUser: null, users: [], allStores: {}, cart: [],
-                currentStore: { storeName: 'Toko KasirKyta', address: 'Jakarta, Indonesia', phone: '0812-3456-7890', products: [], salesHistory: [], pin: '1234' },
-                loginForm: { user: '', pass: '' },
-                newAcc: { user: '', pass: '', role: 'kasir' },
-                newP: { name: '', price: '', stock: '' },
-                toasts: [], showReceiptModal: false, showProductModal: false,
+                currentStore: { storeName: 'KASIRKYTA SHOP', address: 'Jl. Sudirman No. 10', phone: '081234567', products: [], salesHistory: [], pin: '1234' },
+                loginForm: { user: '', pass: '' }, newAcc: { user: '', pass: '', role: 'kasir' },
+                newP: { name: '', price: '', stock: '' }, showReceiptModal: false, showProductModal: false,
 
                 initApp() {
                     this.users = JSON.parse(localStorage.getItem('kk_accounts')) || [{ user: 'owner', pass: 'owner123', role: 'owner', owner: 'owner' }];
                     this.allStores = JSON.parse(localStorage.getItem('kk_stores')) || {};
                     const session = localStorage.getItem('kk_session');
-                    if(session) {
-                        this.currentUser = JSON.parse(session);
-                        this.loadStoreData();
-                        this.currentPage = 'dashboard';
-                    }
+                    if(session) { this.currentUser = JSON.parse(session); this.loadStoreData(); this.currentPage = 'dashboard'; }
                 },
 
-                // --- AI LOGIC #1: Peramalan Stok Sederhana ---
-                aiLowStockAlerts() {
-                    return this.currentStore.products.filter(p => {
-                        // AI Logic: Jika stok < 5 atau stok < rata-rata penjualan harian (jika ada data)
-                        return p.stock <= 5;
-                    });
-                },
-
-                // --- AI LOGIC #2: Smart Recommendation ---
+                // --- AI LOGIC ---
+                aiLowStockAlerts() { return this.currentStore.products.filter(p => p.stock <= 3); },
                 getAiRecommendation() {
                     if (this.cart.length === 0) return null;
-                    const lastItem = this.cart[this.cart.length - 1];
-                    // AI Logic: Mencari produk lain yang bukan ada di keranjang dan memiliki stok tersedia
-                    return this.currentStore.products.find(p => p.id !== lastItem.id && p.stock > 0);
+                    return this.currentStore.products.find(p => !this.cart.some(c => c.id === p.id) && p.stock > 0);
                 },
 
                 openLogin(role) { this.loginRole = role; this.currentPage = 'login-form'; },
@@ -319,22 +263,22 @@
                         localStorage.setItem('kk_session', JSON.stringify(user));
                         this.loadStoreData();
                         this.currentPage = 'dashboard';
-                        this.addToast("Login Berhasil!");
-                    } else { this.addToast("Gagal Login!", "error"); }
+                    } else { alert("Login Gagal!"); }
                 },
 
                 registerAccount() {
-                    if(!this.newAcc.user || !this.newAcc.pass) return;
+                    const pin = prompt("Konfirmasi PIN Owner untuk membuat akun:");
+                    if(pin !== this.currentStore.pin) return alert("PIN Salah!");
                     const ownerKey = this.currentUser.role === 'owner' ? this.currentUser.user : this.currentUser.owner;
                     this.users.push({ ...this.newAcc, owner: ownerKey });
                     localStorage.setItem('kk_accounts', JSON.stringify(this.users));
-                    this.addToast("Akun Berhasil Dibuat");
+                    alert("Akun berhasil didaftarkan!");
                     this.newAcc = { user: '', pass: '', role: 'kasir' };
                 },
 
                 loadStoreData() {
                     const key = this.currentUser.role === 'owner' ? this.currentUser.user : this.currentUser.owner;
-                    this.currentStore = this.allStores[key] || { ...this.currentStore };
+                    this.currentStore = this.allStores[key] || this.currentStore;
                 },
 
                 saveStoreData() {
@@ -344,16 +288,27 @@
                 },
 
                 addToCart(p) {
-                    if(p.stock <= 0) return this.addToast("Stok Kosong!", "error");
+                    if(p.stock <= 0) return alert("Stok Kosong!");
                     let exist = this.cart.find(i => i.id === p.id);
                     if(exist) { if(exist.qty < p.stock) exist.qty++; } else { this.cart.push({...p, qty: 1}); }
                 },
 
                 secureRemoveItem(idx) {
-                    if(confirm("Hapus item ini?")) this.cart.splice(idx, 1);
+                    const pin = prompt("Masukkan PIN Otoritas untuk menghapus:");
+                    if(pin === this.currentStore.pin) { this.cart.splice(idx, 1); } else { alert("PIN Salah!"); }
                 },
 
                 calculateSubtotal() { return this.cart.reduce((a, b) => a + (b.price * b.qty), 0); },
+
+                calculateDailyOmset() {
+                    const today = new Date().toDateString();
+                    return this.currentStore.salesHistory.filter(s => new Date(s.date).toDateString() === today).reduce((a, b) => a + b.amount, 0);
+                },
+
+                calculateMonthlyOmset() {
+                    const m = new Date().getMonth();
+                    return this.currentStore.salesHistory.filter(s => new Date(s.date).getMonth() === m).reduce((a, b) => a + b.amount, 0);
+                },
 
                 addProduct() {
                     this.currentStore.products.push({ id: Date.now(), ...this.newP, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock) });
@@ -370,19 +325,12 @@
                     this.saveStoreData();
                     window.print();
                     this.cart = []; this.showReceiptModal = false;
-                    this.addToast("Transaksi Selesai!");
                 },
 
                 logout() { localStorage.removeItem('kk_session'); location.reload(); },
-                addToast(m, t='success') {
-                    const id = Date.now();
-                    this.toasts.push({ id, message: m, type: t, show: true });
-                    setTimeout(() => this.toasts = this.toasts.filter(x => x.id !== id), 3000);
-                },
-                formatIDR(v) { return 'Rp' + new Intl.NumberFormat('id-ID').format(v); },
-                getBtnColor(r) { return r === 'owner' ? 'bg-indigo-600' : (r === 'admin' ? 'bg-slate-700' : 'bg-emerald-600'); }
+                formatIDR(v) { return 'Rp' + new Intl.NumberFormat('id-ID').format(v); }
             }
         }
     </script>
 </body>
-  </html>
+                                             </html>
