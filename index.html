@@ -3,31 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KasirKyta v12.0 - Ultimate UI</title>
+    <title>KasirKyta v12.1 - Fix & Notification</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap');
-        
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         [x-cloak] { display: none !important; }
         
-        /* Smooth Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         
-        /* Animations */
-        .animate-enter { animation: enter 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes enter { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-        
+        .animate-enter { animation: enter 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast Animation */
+        .toast-enter { animation: slideIn 0.4s ease forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         @media print {
             body * { visibility: hidden; }
             #receipt-content, #receipt-content * { visibility: visible; }
@@ -38,29 +32,35 @@
 </head>
 <body class="text-slate-800" x-data="kasirKyta()" x-init="initApp()">
 
-    <nav class="fixed top-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md rounded-2xl z-[50] px-6 py-3 flex justify-between items-center text-white shadow-2xl animate-enter no-print">
+    <div class="fixed top-24 right-6 z-[999] space-y-3 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div class="toast-enter pointer-events-auto flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border border-white/20 min-w-[280px]"
+                 :class="toast.type === 'success' ? 'bg-emerald-500 text-white' : (toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-indigo-600 text-white')">
+                <i class="fa-solid" :class="toast.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'"></i>
+                <span class="text-xs font-bold uppercase tracking-wider" x-text="toast.msg"></span>
+            </div>
+        </template>
+    </div>
+
+    <nav class="fixed top-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md rounded-2xl z-[50] px-6 py-3 flex justify-between items-center text-white shadow-2xl no-print">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/50">
+            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <i class="fa-solid fa-cash-register text-white text-xs"></i>
             </div>
-            <span class="font-bold tracking-tight">KasirKyta <span class="opacity-50 font-light">v12</span></span>
+            <span class="font-bold tracking-tight">KasirKyta <span class="opacity-50 font-light text-xs">v12.1</span></span>
         </div>
         
-        <div class="flex gap-3 items-center">
-             <template x-if="currentPage === 'dashboard'">
-                <div class="flex gap-2">
-                    <button @click="backupData" class="bg-indigo-600/50 hover:bg-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition border border-indigo-400/30">
-                        <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Backup
-                    </button>
-                    <label class="bg-emerald-600/50 hover:bg-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition border border-emerald-400/30 cursor-pointer">
-                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Restore
-                        <input type="file" @change="restoreData" class="hidden" accept=".json">
-                    </label>
-                    <button @click="logout" class="w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500 text-red-200 hover:text-white transition flex items-center justify-center">
-                        <i class="fa-solid fa-power-off text-xs"></i>
-                    </button>
-                </div>
-            </template>
+        <div class="flex gap-2 items-center" x-show="currentPage === 'dashboard'">
+            <button @click="backupData" class="bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition border border-white/10">
+                <i class="fa-solid fa-download mr-1"></i> Backup
+            </button>
+            <label class="bg-emerald-600/50 hover:bg-emerald-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase transition border border-emerald-400/30 cursor-pointer">
+                <i class="fa-solid fa-upload mr-1"></i> Restore
+                <input type="file" @change="restoreData" class="hidden" accept=".json">
+            </label>
+            <button @click="logout" class="w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500 text-red-200 transition flex items-center justify-center">
+                <i class="fa-solid fa-power-off text-xs"></i>
+            </button>
         </div>
     </nav>
 
@@ -69,30 +69,17 @@
             <div class="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-600/30 rounded-full blur-[120px]"></div>
             <div class="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px]"></div>
 
-            <div class="relative z-10 text-center space-y-8 animate-enter max-w-5xl">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[11px] font-bold tracking-widest uppercase text-indigo-300">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                    Open Partnership 2025
+            <div class="relative z-10 text-center space-y-8 animate-enter max-w-4xl">
+                <div class="inline-flex px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold tracking-widest uppercase text-indigo-300">
+                    Sistem POS Terintegrasi & Aman
                 </div>
-
-                <h1 class="text-7xl md:text-9xl font-black tracking-tighter leading-tight bg-gradient-to-b from-white via-white to-slate-500 text-transparent bg-clip-text drop-shadow-2xl">
-                    KasirKyta.
-                </h1>
-
-                <p class="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
-                    Sistem POS cerdas dengan fitur <span class="text-indigo-400 font-medium">Export Excel</span>, Keamanan PIN, dan Manajemen Stok Real-time.
-                </p>
-
+                <h1 class="text-7xl md:text-9xl font-black tracking-tighter bg-gradient-to-b from-white via-white to-slate-500 text-transparent bg-clip-text">KasirKyta.</h1>
+                <p class="text-xl text-slate-400 max-w-xl mx-auto font-light">Kelola transaksi, pantau omset, dan aman dengan fitur <span class="text-white font-bold">Backup Data</span>.</p>
+                
                 <div class="flex flex-col md:flex-row gap-5 justify-center pt-8">
-                    <button @click="currentPage = 'auth-choice'" class="group relative px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
-                        Masuk Sistem
-                        <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-                    
-                    <a href="https://wa.me/6281234567890?text=Halo%20Tim%20KasirKyta,%20saya%20tertarik%20untuk%20bergabung%20menjadi%20mitra." target="_blank" 
-                       class="px-8 py-4 bg-transparent border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2 hover:border-emerald-400/50 hover:text-emerald-300">
-                        <i class="fa-brands fa-whatsapp text-xl"></i>
-                        Join Mitra
+                    <button @click="currentPage = 'auth-choice'" class="px-8 py-4 bg-white text-slate-900 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl">Masuk Sistem</button>
+                    <a href="https://wa.me/6281234567890" target="_blank" class="px-8 py-4 border border-white/20 rounded-full font-bold text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-emerald-400 text-xl"></i> Join Mitra
                     </a>
                 </div>
             </div>
@@ -100,48 +87,37 @@
     </template>
 
     <template x-if="currentPage === 'auth-choice'">
-        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 relative">
-            <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-            
-            <h2 class="text-3xl font-black mb-10 text-slate-800 z-10">Pilih Akses Masuk</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl z-10">
-                <button @click="openLogin('owner')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl hover:shadow-amber-500/20 transition-all hover:-translate-y-2 border border-slate-100 text-left">
-                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-2xl mb-6 group-hover:scale-110 transition-transform">👑</div>
-                    <h3 class="font-bold text-xl text-slate-800">Owner</h3>
-                    <p class="text-sm text-slate-400 mt-2">Akses penuh laporan & manajemen tim.</p>
+        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 animate-enter">
+            <h2 class="text-3xl font-black mb-10 text-slate-800">Pilih Akses Masuk</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                <button @click="openLogin('owner')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-slate-100 text-left">
+                    <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 text-2xl mb-6">👑</div>
+                    <h3 class="font-bold text-xl">Owner</h3>
+                    <p class="text-xs text-slate-400 mt-2">Kontrol penuh laporan & tim.</p>
                 </button>
-                <button @click="openLogin('admin')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl hover:shadow-indigo-500/20 transition-all hover:-translate-y-2 border border-slate-100 text-left">
-                    <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 text-2xl mb-6 group-hover:scale-110 transition-transform">🛠️</div>
-                    <h3 class="font-bold text-xl text-slate-800">Admin</h3>
-                    <p class="text-sm text-slate-400 mt-2">Kelola produk & stok toko.</p>
+                <button @click="openLogin('admin')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-slate-100 text-left">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 text-2xl mb-6">🛠️</div>
+                    <h3 class="font-bold text-xl">Admin</h3>
+                    <p class="text-xs text-slate-400 mt-2">Kelola stok & daftar produk.</p>
                 </button>
-                <button @click="openLogin('kasir')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl hover:shadow-emerald-500/20 transition-all hover:-translate-y-2 border border-slate-100 text-left">
-                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl mb-6 group-hover:scale-110 transition-transform">🛒</div>
-                    <h3 class="font-bold text-xl text-slate-800">Kasir</h3>
-                    <p class="text-sm text-slate-400 mt-2">Transaksi penjualan & struk.</p>
+                <button @click="openLogin('kasir')" class="group bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border border-slate-100 text-left">
+                    <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl mb-6">🛒</div>
+                    <h3 class="font-bold text-xl">Kasir</h3>
+                    <p class="text-xs text-slate-400 mt-2">Fokus melayani transaksi.</p>
                 </button>
             </div>
-            <button @click="currentPage = 'landing'" class="mt-12 text-slate-400 font-bold uppercase text-xs tracking-widest hover:text-indigo-600 z-10 transition">Kembali ke Beranda</button>
+            <button @click="currentPage = 'landing'" class="mt-12 text-slate-400 font-bold text-xs hover:text-indigo-600">KEMBALI KE BERANDA</button>
         </div>
     </template>
 
     <template x-if="currentPage === 'login-form'">
-        <div class="min-h-screen flex items-center justify-center p-6 bg-slate-100">
-            <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-slate-100 animate-enter">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold text-slate-800" x-text="'Login ' + loginRole.charAt(0).toUpperCase() + loginRole.slice(1)"></h2>
-                    <p class="text-sm text-slate-400">Masukkan kredensial Anda</p>
-                </div>
+        <div class="min-h-screen flex items-center justify-center p-6 bg-slate-100 animate-enter">
+            <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm">
+                <h2 class="text-2xl font-bold text-center mb-8 uppercase" x-text="'Login ' + loginRole"></h2>
                 <div class="space-y-4">
-                    <div class="bg-slate-50 p-3 rounded-2xl border focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all flex items-center gap-3">
-                        <i class="fa-solid fa-user text-slate-400 ml-2"></i>
-                        <input type="text" x-model="loginForm.user" placeholder="Username" class="bg-transparent w-full outline-none text-sm font-bold text-slate-700">
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl border focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all flex items-center gap-3">
-                        <i class="fa-solid fa-lock text-slate-400 ml-2"></i>
-                        <input type="password" x-model="loginForm.pass" placeholder="Password" class="bg-transparent w-full outline-none text-sm font-bold text-slate-700">
-                    </div>
-                    <button @click="handleLogin" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg shadow-slate-900/20 hover:scale-[1.02] active:scale-95 transition-all">MASUK</button>
+                    <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full bg-slate-50 border-none p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500/20 font-bold text-sm">
+                    <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full bg-slate-50 border-none p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500/20 font-bold text-sm">
+                    <button @click="handleLogin" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-black transition-all">MASUK</button>
                     <button @click="currentPage = 'auth-choice'" class="w-full text-slate-400 text-xs font-bold py-2">BATAL</button>
                 </div>
             </div>
@@ -152,146 +128,95 @@
         <div class="min-h-screen pt-24 pb-10 px-4 md:px-8 max-w-[1600px] mx-auto animate-enter" x-cloak>
             
             <div x-show="currentUser.role !== 'kasir'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Omset Hari Ini</p>
-                            <h3 class="text-2xl font-black text-slate-800 mt-1" x-text="formatIDR(calculateDailyOmset())"></h3>
-                        </div>
-                        <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><i class="fa-solid fa-chart-line"></i></div>
-                    </div>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Omset Hari Ini</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" x-text="formatIDR(calculateDailyOmset())"></h3>
                 </div>
-
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Omset Bulan Ini</p>
-                            <h3 class="text-2xl font-black text-slate-800 mt-1" x-text="formatIDR(calculateMonthlyOmset())"></h3>
-                        </div>
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600"><i class="fa-solid fa-calendar-check"></i></div>
-                    </div>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Omset Bulan Ini</p>
+                    <h3 class="text-2xl font-black text-slate-800 mt-2" x-text="formatIDR(calculateMonthlyOmset())"></h3>
                 </div>
-
-                <div class="bg-gradient-to-br from-slate-800 to-black text-white p-6 rounded-[2rem] shadow-lg shadow-slate-900/20 flex flex-col justify-between">
+                <div class="bg-indigo-600 p-6 rounded-[2rem] shadow-xl text-white flex justify-between items-center">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Laporan Keuangan</p>
-                        <p class="text-sm text-slate-300 mt-1 line-clamp-2">Download rekap penjualan ke dalam format Excel (.csv)</p>
+                        <p class="text-[10px] font-black text-indigo-200 uppercase tracking-widest">Rekap Excel</p>
+                        <p class="text-xs font-medium mt-1">Export semua laporan</p>
                     </div>
-                    <button @click="exportToExcel" class="mt-4 bg-white/10 hover:bg-white/20 border border-white/10 text-white py-2 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 w-fit transition">
-                        <i class="fa-solid fa-file-excel text-emerald-400"></i> Download Data
+                    <button @click="exportToExcel" class="w-12 h-12 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center transition">
+                        <i class="fa-solid fa-file-excel"></i>
                     </button>
                 </div>
             </div>
 
             <div class="grid grid-cols-12 gap-6 h-full">
-                
                 <div class="col-span-12 lg:col-span-4 space-y-6" x-show="currentUser.role !== 'kasir'">
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600"><i class="fa-solid fa-store text-xs"></i></div>
-                            <h3 class="font-bold text-slate-800">Identitas Toko</h3>
+                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-indigo-500"></i> Tambah Katalog</h3>
+                        <input x-model="newP.name" placeholder="Nama Produk" class="w-full text-sm font-bold bg-slate-50 p-4 rounded-2xl outline-none">
+                        <div class="flex gap-2">
+                            <input type="number" x-model="newP.price" placeholder="Harga" class="w-1/2 text-sm font-bold bg-slate-50 p-4 rounded-2xl outline-none">
+                            <input type="number" x-model="newP.stock" placeholder="Stok" class="w-1/2 text-sm font-bold bg-slate-50 p-4 rounded-2xl outline-none">
                         </div>
-                        <div class="space-y-3">
-                            <input x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-indigo-100">
-                            <input x-model="currentStore.address" placeholder="Alamat (Cetak di Struk)" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-indigo-100">
-                            <input x-model="currentStore.phone" placeholder="No Telepon" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-indigo-100">
-                            <div class="relative">
-                                <i class="fa-solid fa-lock absolute left-3 top-3.5 text-red-300 text-xs"></i>
-                                <input type="password" x-model="currentStore.pin" placeholder="PIN Hapus Barang" class="w-full text-sm font-bold bg-red-50 text-red-600 border-none p-3 pl-9 rounded-xl focus:ring-2 focus:ring-red-100 placeholder-red-300">
-                            </div>
-                        </div>
+                        <button @click="addProduct" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition">Simpan Produk</button>
                     </div>
-
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600"><i class="fa-solid fa-box text-xs"></i></div>
-                            <h3 class="font-bold text-slate-800">Inventory</h3>
-                        </div>
-                        <div class="space-y-3">
-                            <input x-model="newP.name" placeholder="Nama Produk" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl">
-                            <div class="flex gap-3">
-                                <input type="number" x-model="newP.price" placeholder="Harga" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl">
-                                <input type="number" x-model="newP.stock" placeholder="Stok" class="w-full text-sm font-medium bg-slate-50 border-none p-3 rounded-xl">
-                            </div>
-                            <button @click="addProduct" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-700 transition">Tambah Katalog</button>
-                        </div>
+                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-store text-emerald-500"></i> Info Toko</h3>
+                        <input x-model="currentStore.storeName" placeholder="Nama Toko" class="w-full text-xs font-bold bg-slate-50 p-3 rounded-xl outline-none">
+                        <input x-model="currentStore.address" placeholder="Alamat" class="w-full text-xs font-bold bg-slate-50 p-3 rounded-xl outline-none">
+                        <input type="password" x-model="currentStore.pin" placeholder="PIN Transaksi" class="w-full text-xs font-bold bg-red-50 text-red-600 p-3 rounded-xl outline-none">
                     </div>
                 </div>
 
-                <div class="col-span-12 lg:col-span-8 flex gap-6 flex-col md:flex-row h-[calc(100vh-200px)]" :class="currentUser.role === 'kasir' ? 'lg:col-span-12 h-[calc(100vh-150px)]' : ''">
+                <div class="col-span-12 lg:col-span-8 flex flex-col md:flex-row gap-6 h-[75vh]" :class="currentUser.role === 'kasir' ? 'lg:col-span-12' : ''">
                     
                     <div class="flex-1 bg-white rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                        <div class="p-6 border-b border-slate-50">
-                            <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
-                                <input x-model="searchQuery" type="text" placeholder="Cari item..." class="w-full bg-slate-50 pl-11 pr-4 py-3 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all">
-                            </div>
+                        <div class="p-6 border-b">
+                            <input x-model="searchQuery" type="text" placeholder="Cari barang..." class="w-full bg-slate-50 px-6 py-3 rounded-2xl text-sm font-bold outline-none focus:ring-2 ring-indigo-500/20">
                         </div>
-                        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                            <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 <template x-for="p in filteredProducts" :key="p.id">
-                                    <div @click="addToCart(p)" class="group relative p-4 rounded-3xl border border-slate-100 hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer transition-all bg-white active:scale-95"
-                                         :class="p.stock <= 5 ? 'bg-red-50/50' : ''">
-                                        
-                                        <div x-show="p.stock <= 5" class="absolute top-3 right-3 px-2 py-1 bg-red-500 text-white text-[8px] font-black rounded-md animate-pulse">LOW</div>
-                                        
-                                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm mb-3 shadow-inner group-hover:from-indigo-500 group-hover:to-purple-500 group-hover:text-white transition-all" x-text="p.name.charAt(0)"></div>
-                                        
-                                        <h4 class="font-bold text-xs text-slate-700 uppercase leading-tight group-hover:text-indigo-600 transition-colors" x-text="p.name"></h4>
-                                        <p class="text-[10px] font-bold text-slate-400 mt-1" x-text="formatIDR(p.price)"></p>
-                                        <p class="text-[9px] font-bold mt-2" :class="p.stock <= 5 ? 'text-red-500' : 'text-slate-300'" x-text="'Stok: ' + p.stock"></p>
-                                        
-                                        <button x-show="currentUser.role !== 'kasir'" @click.stop="deleteProduct(p.id)" class="absolute bottom-3 right-3 text-slate-200 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    <div @click="addToCart(p)" class="p-4 rounded-3xl border border-slate-100 hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10 transition-all bg-white cursor-pointer relative group">
+                                        <div x-show="p.stock <= 5" class="absolute top-3 right-3 px-2 py-0.5 bg-red-500 text-white text-[8px] font-black rounded uppercase animate-pulse">Low</div>
+                                        <div class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all" x-text="p.name.charAt(0)"></div>
+                                        <h4 class="font-bold text-xs mt-4 uppercase truncate" x-text="p.name"></h4>
+                                        <p class="text-indigo-600 font-bold text-[10px] mt-1" x-text="formatIDR(p.price)"></p>
+                                        <div class="mt-3 flex justify-between items-center">
+                                            <span class="text-[9px] font-bold text-slate-300" x-text="'Stok: ' + p.stock"></span>
+                                            <button x-show="currentUser.role !== 'kasir'" @click.stop="deleteProduct(p.id)" class="text-slate-200 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
                         </div>
                     </div>
 
-                    <div class="w-full md:w-[350px] bg-white rounded-[2.5rem] shadow-xl shadow-slate-200 border border-slate-100 flex flex-col overflow-hidden relative z-10">
+                    <div class="w-full md:w-[350px] bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
                         <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                            <h3 class="font-bold italic">Order List</h3>
-                            <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold" x-text="cart.length + ' Items'"></span>
+                            <span class="font-bold italic">Keranjang Belanja</span>
+                            <span class="text-[10px] bg-white/20 px-2 py-1 rounded" x-text="cart.length + ' Item'"></span>
                         </div>
-                        
-                        <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/50">
+                        <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
                             <template x-for="(item, index) in cart" :key="index">
-                                <div class="flex items-center gap-3 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500" x-text="item.qty + 'x'"></div>
+                                <div class="flex items-center gap-3 p-3 bg-white rounded-2xl shadow-sm">
+                                    <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-[10px] font-bold text-indigo-600" x-text="item.qty + 'x'"></div>
                                     <div class="flex-1">
-                                        <p class="text-[11px] font-bold uppercase text-slate-700 leading-tight" x-text="item.name"></p>
+                                        <p class="text-[10px] font-bold uppercase truncate" x-text="item.name"></p>
                                         <p class="text-[10px] text-indigo-500 font-bold" x-text="formatIDR(item.price * item.qty)"></p>
                                     </div>
-                                    <button @click="secureRemoveItem(index)" class="text-slate-300 hover:text-red-500 transition p-2"><i class="fa-solid fa-xmark"></i></button>
+                                    <button @click="secureRemoveItem(index)" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </template>
-                            <div x-show="cart.length === 0" class="text-center py-10 opacity-30">
-                                <i class="fa-solid fa-basket-shopping text-4xl mb-2"></i>
-                                <p class="text-xs font-bold uppercase">Keranjang Kosong</p>
-                            </div>
                         </div>
-
-                        <div class="p-5 bg-white border-t space-y-3 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-                            <div class="flex gap-2">
-                                <input type="number" x-model="discountPercent" placeholder="Disc%" class="w-1/2 bg-slate-50 rounded-xl px-3 py-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-indigo-500">
-                                <input type="number" x-model="taxPercent" placeholder="Tax%" class="w-1/2 bg-slate-50 rounded-xl px-3 py-2 text-xs font-bold text-center outline-none focus:ring-1 focus:ring-indigo-500">
-                            </div>
-                            <select x-model="paymentMethod" class="w-full bg-slate-50 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
-                                <option value="TUNAI">💵 Tunai (Cash)</option>
-                                <option value="QRIS">📱 QRIS / E-Wallet</option>
-                                <option value="DEBIT">💳 Kartu Debit/Kredit</option>
+                        <div class="p-6 border-t bg-white space-y-4">
+                            <select x-model="paymentMethod" class="w-full bg-slate-50 p-3 rounded-xl text-xs font-bold outline-none">
+                                <option value="TUNAI">💵 TUNAI</option>
+                                <option value="QRIS">📱 QRIS / E-WALLET</option>
                             </select>
-                            
-                            <div class="pt-2 border-t border-dashed space-y-1">
-                                <div class="flex justify-between text-[10px] font-bold text-slate-400"><span>Subtotal</span> <span x-text="formatIDR(calculateSubtotal())"></span></div>
-                                <div class="flex justify-between items-center pt-2">
-                                    <span class="font-black text-slate-800 italic text-sm">TOTAL</span>
-                                    <span class="font-black text-2xl text-slate-800 tracking-tighter" x-text="formatIDR(calculateFinalTotal())"></span>
-                                </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-400">Total Akhir</span>
+                                <span class="text-2xl font-black tracking-tighter" x-text="formatIDR(calculateFinalTotal())"></span>
                             </div>
-                            <button @click="showReceiptModal = true" :disabled="cart.length === 0" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-indigo-200">
-                                Bayar
-                            </button>
+                            <button @click="showReceiptModal = true" :disabled="cart.length === 0" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold uppercase tracking-widest shadow-lg shadow-indigo-200 disabled:opacity-50">Bayar Sekarang</button>
                         </div>
                     </div>
                 </div>
@@ -301,53 +226,28 @@
 
     <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
         <div class="bg-white w-full max-w-xs rounded-[2rem] p-8 shadow-2xl animate-enter">
-            <div id="receipt-content" class="text-slate-800 font-mono text-[10px] leading-relaxed">
-                <div class="text-center mb-6 pb-4 border-b border-dashed border-slate-300">
-                    <h2 class="font-black text-lg uppercase tracking-tight mb-1" x-text="currentStore.storeName"></h2>
+            <div id="receipt-content" class="text-slate-800 font-mono text-[10px]">
+                <div class="text-center mb-6">
+                    <h2 class="font-black text-lg uppercase" x-text="currentStore.storeName"></h2>
                     <p x-text="currentStore.address"></p>
-                    <p x-text="currentStore.phone"></p>
                 </div>
-                
-                <div class="flex justify-between mb-2 opacity-70">
-                    <span x-text="new Date().toLocaleDateString('id-ID')"></span>
-                    <span x-text="new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})"></span>
-                </div>
-                <div class="flex justify-between mb-4 pb-2 border-b border-dashed border-slate-300">
-                    <span class="font-bold">#TRX-<span x-text="(currentStore.salesHistory?.length || 0) + 1"></span></span>
-                    <span class="font-bold uppercase" x-text="paymentMethod"></span>
-                </div>
-
-                <div class="space-y-2 mb-4 pb-4 border-b border-dashed border-slate-300">
+                <div class="border-b border-dashed border-slate-300 pb-4 mb-4 space-y-2">
                     <template x-for="item in cart">
                         <div class="flex justify-between">
-                            <span class="w-2/3 truncate" x-text="item.name"></span>
-                            <div class="flex gap-2">
-                                <span x-text="item.qty + 'x'"></span>
-                                <span x-text="formatIDR(item.price * item.qty)"></span>
-                            </div>
+                            <span x-text="item.name"></span>
+                            <span><span x-text="item.qty"></span>x <span x-text="formatIDR(item.price * item.qty)"></span></span>
                         </div>
                     </template>
                 </div>
-
-                <div class="text-right space-y-1">
-                    <div class="flex justify-between opacity-60"><span>Subtotal</span> <span x-text="formatIDR(calculateSubtotal())"></span></div>
-                    <div x-show="discountPercent > 0" class="flex justify-between text-red-500"><span>Disc</span> <span x-text="'-' + formatIDR(calculateDiscountAmount())"></span></div>
-                    <div x-show="taxPercent > 0" class="flex justify-between text-indigo-500"><span>Tax</span> <span x-text="'+' + formatIDR(calculateTaxAmount())"></span></div>
-                    <div class="flex justify-between font-black text-sm mt-2 pt-2 border-t border-slate-200">
-                        <span>TOTAL</span>
-                        <span x-text="formatIDR(calculateFinalTotal())"></span>
-                    </div>
+                <div class="flex justify-between font-black text-sm">
+                    <span>TOTAL</span>
+                    <span x-text="formatIDR(calculateFinalTotal())"></span>
                 </div>
-
-                <div class="text-center mt-8 opacity-50">
-                    <p class="font-bold uppercase text-[9px]">Terima Kasih</p>
-                    <p class="text-[8px]">Powerd by KasirKyta</p>
-                </div>
+                <div class="text-center mt-8 opacity-50 uppercase font-bold tracking-widest text-[8px]">Terima Kasih</div>
             </div>
-
             <div class="mt-6 space-y-2 no-print">
-                <button @click="processPayment" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold uppercase text-xs hover:bg-black transition">Cetak Struk</button>
-                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold uppercase text-xs hover:text-red-500 transition">Batal</button>
+                <button @click="processPayment" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs uppercase">Cetak Struk</button>
+                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold text-[10px] py-2">BATAL</button>
             </div>
         </div>
     </div>
@@ -356,125 +256,99 @@
         function kasirKyta() {
             return {
                 currentPage: 'landing', loginRole: '', currentUser: null, users: [], allStores: {}, cart: [],
-                currentStore: { storeName: 'KasirKyta Store', address: '', phone: '', products: [], salesHistory: [], pin: '1234' },
+                currentStore: { storeName: 'Toko Saya', address: '', phone: '', products: [], salesHistory: [], pin: '1234' },
                 loginForm: { user: '', pass: '' }, newP: { name: '', price: '', stock: '' },
-                searchQuery: '', discountPercent: 0, taxPercent: 0, showReceiptModal: false, paymentMethod: 'TUNAI',
+                searchQuery: '', showReceiptModal: false, paymentMethod: 'TUNAI',
+                toasts: [],
+
+                // FITUR TOAST: Menampilkan notifikasi
+                addToast(msg, type = 'info') {
+                    const id = Date.now();
+                    this.toasts.push({ id, msg, type });
+                    setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 3000);
+                },
 
                 initApp() {
                     this.users = JSON.parse(localStorage.getItem('kk_accounts')) || [{ user: 'owner', pass: 'owner123', role: 'owner', owner: 'owner' }];
                     this.allStores = JSON.parse(localStorage.getItem('kk_stores')) || {};
                     const session = localStorage.getItem('kk_session');
-                    if(session) { this.currentUser = JSON.parse(session); this.loadStoreData(); this.currentPage = 'dashboard'; }
-                },
-
-                // EXPORT TO EXCEL FEATURE
-                exportToExcel() {
-                    const history = this.currentStore.salesHistory;
-                    if(!history || history.length === 0) return alert("Belum ada data transaksi untuk diexport.");
-
-                    // Header CSV
-                    let csvContent = "data:text/csv;charset=utf-8,";
-                    csvContent += "Tanggal,Jam,Metode Pembayaran,Total Transaksi\n";
-
-                    // Isi Data
-                    history.forEach(row => {
-                        const date = new Date(row.date);
-                        const dateStr = date.toLocaleDateString('id-ID');
-                        const timeStr = date.toLocaleTimeString('id-ID');
-                        csvContent += `${dateStr},${timeStr},${row.method},${row.amount}\n`;
-                    });
-
-                    // Download Process
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", `Laporan_Omset_${this.currentStore.storeName.replace(/\s+/g, '_')}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                },
-
-                backupData() {
-                    const data = { accounts: this.users, stores: this.allStores };
-                    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `Backup_KasirKyta_${new Date().toISOString().slice(0,10)}.json`;
-                    link.click();
-                },
-
-                restoreData(event) {
-                    const file = event.target.files[0];
-                    if(!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            if(data.accounts && data.stores) {
-                                localStorage.setItem('kk_accounts', JSON.stringify(data.accounts));
-                                localStorage.setItem('kk_stores', JSON.stringify(data.stores));
-                                alert("Data berhasil dipulihkan!"); location.reload();
-                            }
-                        } catch(err) { alert("File corrupt!"); }
-                    };
-                    reader.readAsText(file);
-                },
-
-                openLogin(role) { this.loginRole = role; this.currentPage = 'login-form'; },
-                
-                handleLogin() {
-                    const user = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass);
-                    if(user && user.role === this.loginRole) {
-                        this.currentUser = user; localStorage.setItem('kk_session', JSON.stringify(user));
-                        this.loadStoreData(); this.currentPage = 'dashboard'; this.loginForm = { user: '', pass: '' };
-                    } else { alert("Login Gagal!"); }
+                    if(session) { 
+                        this.currentUser = JSON.parse(session); 
+                        this.loadStoreData(); 
+                        this.currentPage = 'dashboard'; 
+                        this.addToast("Sesi Login Dipulihkan", "success");
+                    }
                 },
 
                 loadStoreData() {
                     const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
-                    this.currentStore = this.allStores[storeKey] || { storeName: 'Toko Saya', address:'', phone:'', products: [], salesHistory: [], pin: '1234' };
-                    if(!this.currentStore.salesHistory) this.currentStore.salesHistory = [];
+                    let data = this.allStores[storeKey] || { storeName: 'Toko Saya', address:'', products: [], salesHistory: [], pin: '1234' };
+                    if (!data.products) data.products = [];
+                    if (!data.salesHistory) data.salesHistory = [];
+                    this.currentStore = data;
                 },
-                
+
                 saveStoreData() {
                     const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
-                    this.allStores[storeKey] = this.currentStore;
+                    this.allStores[storeKey] = JSON.parse(JSON.stringify(this.currentStore));
                     localStorage.setItem('kk_stores', JSON.stringify(this.allStores));
                 },
 
+                // PERBAIKAN: Fungsi Tambah Produk
                 addProduct() {
-                    if(!this.newP.name || !this.newP.price) return alert("Isi data produk!");
-                    this.currentStore.products.push({ id: Date.now(), ...this.newP, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock)||0 });
-                    this.saveStoreData(); this.newP = { name: '', price: '', stock: '' };
+                    if(!this.newP.name || !this.newP.price) return this.addToast("Isi Nama & Harga!", "error");
+                    
+                    const p = { 
+                        id: Date.now(), 
+                        name: this.newP.name, 
+                        price: parseInt(this.newP.price), 
+                        stock: parseInt(this.newP.stock) || 0 
+                    };
+                    
+                    // Gunakan Spread operator agar reaktif
+                    this.currentStore.products = [...this.currentStore.products, p];
+                    this.saveStoreData();
+                    this.newP = { name: '', price: '', stock: '' };
+                    this.addToast("Produk Berhasil Ditambah", "success");
                 },
 
                 deleteProduct(id) {
-                    if(confirm("Hapus produk?") && prompt("PIN Toko:") === this.currentStore.pin) {
+                    if(prompt("Masukkan PIN Toko untuk menghapus:") === this.currentStore.pin) {
                         this.currentStore.products = this.currentStore.products.filter(p => p.id !== id);
                         this.saveStoreData();
+                        this.addToast("Produk Telah Dihapus", "success");
+                    } else {
+                        this.addToast("PIN Salah!", "error");
                     }
                 },
 
                 get filteredProducts() {
-                    if (this.searchQuery === '') return this.currentStore.products;
-                    return this.currentStore.products.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                    const ps = this.currentStore.products || [];
+                    return this.searchQuery === '' ? ps : ps.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
                 },
 
                 addToCart(p) {
-                    if(p.stock <= 0) return alert("Stok Habis!");
-                    let itm = this.cart.find(i => i.id === p.id);
-                    if(itm) { if(itm.qty < p.stock) itm.qty++; else alert("Stok maksimal!"); } else { this.cart.push({...p, qty: 1}); }
+                    if(p.stock <= 0) return this.addToast("Stok Habis!", "error");
+                    let item = this.cart.find(i => i.id === p.id);
+                    if(item) {
+                        if(item.qty < p.stock) item.qty++;
+                        else return this.addToast("Maksimal Stok!", "error");
+                    } else {
+                        this.cart.push({...p, qty: 1});
+                    }
+                    this.addToast(p.name + " Ditambah");
                 },
 
                 secureRemoveItem(index) {
-                    const pin = prompt("Masukkan PIN untuk menghapus item:");
-                    if(pin === this.currentStore.pin) this.cart.splice(index, 1); else alert("PIN Salah!");
+                    if(prompt("PIN Hapus Item:") === this.currentStore.pin) {
+                        this.cart.splice(index, 1);
+                        this.addToast("Item Dikeluarkan");
+                    } else {
+                        this.addToast("PIN Salah!", "error");
+                    }
                 },
 
-                calculateSubtotal() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0); },
-                calculateDiscountAmount() { return (this.calculateSubtotal() * (this.discountPercent / 100)); },
-                calculateTaxAmount() { return ((this.calculateSubtotal() - this.calculateDiscountAmount()) * (this.taxPercent / 100)); },
-                calculateFinalTotal() { return this.calculateSubtotal() - this.calculateDiscountAmount() + this.calculateTaxAmount(); },
+                calculateFinalTotal() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0); },
 
                 calculateDailyOmset() {
                     const today = new Date().toDateString();
@@ -490,14 +364,54 @@
                 },
 
                 processPayment() {
-                    const total = this.calculateFinalTotal();
-                    this.currentStore.salesHistory.push({ date: new Date().toISOString(), amount: total, method: this.paymentMethod });
+                    this.currentStore.salesHistory.push({ date: new Date().toISOString(), amount: this.calculateFinalTotal(), method: this.paymentMethod });
                     this.cart.forEach(item => {
                         let prod = this.currentStore.products.find(p => p.id === item.id);
                         if(prod) prod.stock -= item.qty;
                     });
-                    this.saveStoreData(); window.print();
+                    this.saveStoreData();
+                    window.print();
                     this.cart = []; this.showReceiptModal = false;
+                    this.addToast("Transaksi Berhasil!", "success");
+                },
+
+                exportToExcel() {
+                    const history = this.currentStore.salesHistory;
+                    if(!history || history.length === 0) return this.addToast("Data Masih Kosong", "error");
+                    let csv = "data:text/csv;charset=utf-8,Tanggal,Metode,Total\n";
+                    history.forEach(r => { csv += `${new Date(r.date).toLocaleDateString()},${r.method},${r.amount}\n`; });
+                    const link = document.createElement("a");
+                    link.href = encodeURI(csv);
+                    link.download = `Laporan_${this.currentStore.storeName}.csv`;
+                    link.click();
+                    this.addToast("Laporan Didownload");
+                },
+
+                backupData() {
+                    const blob = new Blob([JSON.stringify({ a: this.users, s: this.allStores })], { type: 'application/json' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup_KK.json`; a.click();
+                    this.addToast("Backup Berhasil");
+                },
+
+                restoreData(e) {
+                    const f = e.target.files[0]; if(!f) return;
+                    const r = new FileReader();
+                    r.onload = (ev) => {
+                        const d = JSON.parse(ev.target.result);
+                        localStorage.setItem('kk_accounts', JSON.stringify(d.a));
+                        localStorage.setItem('kk_stores', JSON.stringify(d.s));
+                        location.reload();
+                    };
+                    r.readAsText(f);
+                },
+
+                handleLogin() {
+                    const u = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass);
+                    if(u && u.role === this.loginRole) {
+                        this.currentUser = u; localStorage.setItem('kk_session', JSON.stringify(u));
+                        this.loadStoreData(); this.currentPage = 'dashboard';
+                        this.addToast("Selamat Datang, " + u.user, "success");
+                    } else { this.addToast("Login Gagal!", "error"); }
                 },
 
                 logout() { localStorage.removeItem('kk_session'); location.reload(); },
@@ -506,4 +420,4 @@
         }
     </script>
 </body>
-                    </html>
+</html>
