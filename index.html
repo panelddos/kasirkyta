@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KasirKyta - Smart Analytics POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-content, #receipt-content * { visibility: visible; }
+            #receipt-content { position: absolute; left: 0; top: 0; width: 100%; border:none; }
+            .no-print { display: none !important; }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        
+        /* Animasi Transisi */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
+        .fade-enter, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-900" x-data="kasirKyta()" x-init="initApp()">
+
+    <nav class="fixed top-0 w-full bg-slate-900 z-[100] px-6 py-3 flex justify-between items-center no-print shadow-md">
+        <div class="flex items-center gap-3">
+            <span class="font-black italic text-white tracking-tighter text-xl">KasirKyta <span class="text-indigo-400">Pro</span></span>
+            <template x-if="currentUser">
+                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white bg-white/20" x-text="currentUser.role"></span>
+            </template>
+        </div>
+        <div class="flex gap-4">
+            <template x-if="currentPage !== 'landing' && !currentUser">
+                <button @click="currentPage = 'landing'" class="text-xs font-bold text-white/50 hover:text-white uppercase transition">Beranda</button>
+            </template>
+            <template x-if="currentUser">
+                <button @click="logout" class="bg-red-500 text-white px-4 py-1 rounded-lg text-xs font-bold hover:bg-red-600 transition">LOGOUT</button>
+            </template>
+        </div>
+    </nav>
+
+    <template x-if="currentPage === 'landing'">
+        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div class="z-10 space-y-6 max-w-4xl animate-fade-in">
+                <div class="inline-block px-4 py-1 bg-indigo-500/20 border border-indigo-500/50 rounded-full text-indigo-300 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                    Analytics & POS System
+                </div>
+                <h1 class="text-7xl md:text-9xl font-black tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
+                    KasirKyta
+                </h1>
+                <p class="text-xl font-light opacity-80 max-w-2xl mx-auto">Sistem Kasir Modern dengan <span class="font-bold text-emerald-400">Analisa Grafik Penjualan</span> & <span class="font-bold text-indigo-400">Fast Moving Goods</span>.</p>
+                <button @click="currentPage = 'auth-choice'" class="mt-8 bg-indigo-600 px-12 py-4 rounded-full font-black text-xl shadow-[0_0_40px_rgba(79,70,229,0.5)] hover:scale-105 transition-all uppercase tracking-widest">Mulai Sekarang</button>
+            </div>
+        </div>
+    </template>
+
+    <template x-if="currentPage === 'auth-choice'">
+        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 p-6">
+            <h2 class="text-3xl font-black mb-10 text-slate-800 uppercase italic">Pilih Akses</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+                <button @click="openLogin('owner')" class="bg-white p-10 rounded-3xl shadow-lg border-b-8 border-indigo-600 hover:-translate-y-2 transition-all">
+                    <div class="text-5xl mb-4">👑</div>
+                    <h3 class="font-black text-xl text-slate-800">OWNER / ADMIN</h3>
+                    <p class="text-xs text-slate-500 mt-2">Akses penuh ke Grafik & Produk</p>
+                </button>
+                <button @click="openLogin('kasir')" class="bg-white p-10 rounded-3xl shadow-lg border-b-8 border-emerald-500 hover:-translate-y-2 transition-all">
+                    <div class="text-5xl mb-4">🛒</div>
+                    <h3 class="font-black text-xl text-slate-800">KASIR</h3>
+                    <p class="text-xs text-slate-500 mt-2">Mode Penjualan Cepat</p>
+                </button>
+            </div>
+            <button @click="currentPage = 'landing'" class="mt-12 text-slate-400 font-bold underline text-xs uppercase">Kembali</button>
+        </div>
+    </template>
+
+    <template x-if="currentPage === 'login-form'">
+        <div class="min-h-screen flex items-center justify-center p-6 bg-slate-200">
+            <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm">
+                <h2 class="text-2xl font-black uppercase italic mb-8 text-center" x-text="loginRole + ' Access'"></h2>
+                <div class="space-y-4">
+                    <input type="text" x-model="loginForm.user" placeholder="Username" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500 transition">
+                    <input type="password" x-model="loginForm.pass" placeholder="Password" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none focus:ring-2 ring-indigo-500 transition">
+                    <button @click="handleLogin" class="w-full py-4 rounded-2xl font-black text-white shadow-lg uppercase tracking-widest active:scale-95 transition-all bg-slate-900 hover:bg-black">Masuk</button>
+                    <button @click="currentPage = 'auth-choice'" class="w-full text-center text-slate-400 font-bold text-xs uppercase pt-2">Batal</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-if="currentPage === 'dashboard'">
+        <div class="min-h-screen pt-20 pb-10 px-4 md:px-8 bg-slate-100 flex flex-col gap-6" x-cloak>
+            
+            <div x-show="currentUser.role !== 'kasir'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 space-y-6 flex flex-col justify-center">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Omset Hari Ini</p>
+                        <p class="text-3xl font-black text-indigo-600" x-text="formatIDR(calculateDailyOmset())"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Omset Bulan Ini</p>
+                        <p class="text-3xl font-black text-emerald-500" x-text="formatIDR(calculateMonthlyOmset())"></p>
+                    </div>
+                    <div class="pt-4 border-t">
+                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tambah User</p>
+                         <div class="flex gap-2">
+                             <input type="text" x-model="newKasir.user" placeholder="User Kasir" class="w-1/2 text-xs border p-2 rounded-lg">
+                             <input type="text" x-model="newKasir.pass" placeholder="Pass" class="w-1/4 text-xs border p-2 rounded-lg">
+                             <button @click="createUser('kasir')" class="bg-black text-white px-3 rounded-lg text-[10px] font-bold">ADD</button>
+                         </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-black text-sm uppercase text-slate-700">Analisa Penjualan (7 Hari)</h3>
+                        <button @click="refreshCharts" class="text-[10px] bg-slate-100 px-3 py-1 rounded-full font-bold hover:bg-slate-200">Refresh</button>
+                    </div>
+                    <div class="relative h-48 w-full">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6 flex-1">
+                
+                <div class="col-span-12 lg:col-span-4 space-y-6" x-show="currentUser.role !== 'kasir'">
+                    
+                    <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-xl">
+                        <h3 class="font-black text-indigo-400 text-xs uppercase tracking-widest mb-4">🔥 Top 5 Fast Moving Products</h3>
+                        <div class="relative h-48 w-full flex justify-center">
+                            <canvas id="fastMovingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-[2rem] border shadow-sm space-y-3">
+                        <h3 class="font-black text-slate-400 text-[10px] uppercase tracking-widest">Input Produk Baru</h3>
+                        <input type="text" x-model="newP.name" placeholder="Nama Produk" class="w-full border p-3 rounded-xl text-xs bg-slate-50 font-bold">
+                        <div class="flex gap-2">
+                            <input type="number" x-model="newP.price" placeholder="Harga (Rp)" class="w-1/2 border p-3 rounded-xl text-xs bg-slate-50 font-bold">
+                            <input type="number" x-model="newP.stock" placeholder="Stok Awal" class="w-1/2 border p-3 rounded-xl text-xs bg-slate-50 font-bold">
+                        </div>
+                        <button @click="addProduct" class="w-full bg-emerald-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition">Simpan Produk</button>
+                        
+                        <div class="mt-4 pt-4 border-t">
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Identitas Toko</p>
+                            <input type="text" x-model="currentStore.storeName" class="w-full border p-2 rounded-lg text-xs mb-2" placeholder="Nama Toko">
+                            <input type="password" x-model="currentStore.pin" class="w-full border p-2 rounded-lg text-xs bg-red-50 text-red-500 font-bold" placeholder="PIN Penghapusan (Default: 1234)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-12" :class="currentUser.role === 'kasir' ? 'lg:col-span-7' : 'lg:col-span-5'">
+                    <div class="bg-white p-6 rounded-[2.5rem] border shadow-sm h-full max-h-[85vh] flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-black text-lg text-slate-800 italic uppercase">Katalog Produk</h3>
+                            <input type="text" x-model="searchQuery" placeholder="Cari barang..." class="bg-slate-100 px-4 py-2 rounded-full text-xs font-bold outline-none border focus:border-indigo-500">
+                        </div>
+                        
+                        <div class="overflow-y-auto pr-2 custom-scrollbar grid grid-cols-2 gap-3 content-start">
+                            <template x-for="p in filteredProducts" :key="p.id">
+                                <div @click="addToCart(p)" class="group relative bg-slate-50 border-2 border-transparent hover:border-indigo-600 p-4 rounded-3xl cursor-pointer transition-all active:scale-95">
+                                    <div class="flex justify-between items-start">
+                                        <div class="w-full">
+                                            <p x-text="p.name" class="font-black text-xs text-slate-800 uppercase truncate mb-1"></p>
+                                            <p x-text="formatIDR(p.price)" class="text-indigo-600 font-bold text-[10px]"></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 flex justify-between items-end">
+                                        <span class="text-[9px] font-black uppercase text-slate-400" x-text="'Stok: ' + p.stock"></span>
+                                        <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs">+</div>
+                                    </div>
+                                    <template x-if="currentUser.role !== 'kasir'">
+                                        <button @click.stop="deleteProduct(p.id)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition">✕</button>
+                                    </template>
+                                </div>
+                            </template>
+                            <div x-show="filteredProducts.length === 0" class="col-span-2 text-center py-10 text-slate-400 text-xs italic">Produk tidak ditemukan</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-12" :class="currentUser.role === 'kasir' ? 'lg:col-span-5' : 'lg:col-span-3'">
+                    <div class="bg-slate-900 text-white p-6 rounded-[2.5rem] h-full max-h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-6 z-10">
+                            <h3 class="font-black text-xl italic tracking-tighter">KERANJANG</h3>
+                            <span class="bg-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold" x-text="cart.length + ' Item'"></span>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar z-10">
+                            <template x-for="(item, index) in cart" :key="index">
+                                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+                                    <div class="w-full">
+                                        <div class="flex justify-between">
+                                            <p class="font-bold text-xs uppercase" x-text="item.name"></p>
+                                            <button @click="secureRemoveItem(index)" class="text-red-400 text-[10px] hover:text-red-200">✕</button>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-2">
+                                            <div class="flex items-center gap-2 bg-black/30 rounded-lg px-2 py-1">
+                                                <button @click="updateQty(index, -1)" class="text-xs font-bold px-1 hover:text-indigo-400">-</button>
+                                                <span class="text-[10px] font-bold w-4 text-center" x-text="item.qty"></span>
+                                                <button @click="updateQty(index, 1)" class="text-xs font-bold px-1 hover:text-indigo-400">+</button>
+                                            </div>
+                                            <p class="text-[10px] font-bold text-emerald-400" x-text="formatIDR(item.price * item.qty)"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="cart.length === 0" class="text-center py-10 opacity-30 text-xs italic">Keranjang Kosong</div>
+                        </div>
+
+                        <div class="pt-6 border-t border-white/10 z-10 space-y-3 bg-slate-900">
+                             <div class="flex justify-between text-[10px] text-slate-400">
+                                <span>Subtotal</span>
+                                <span x-text="formatIDR(calculateSubtotal())"></span>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[10px] text-slate-400 w-1/3">Diskon (%)</span>
+                                <input type="number" x-model="discountPercent" class="w-2/3 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-right text-xs outline-none focus:border-indigo-500 transition">
+                            </div>
+                             <div class="flex justify-between font-black text-2xl items-end">
+                                <span class="text-xs italic text-indigo-400 mb-1">TOTAL</span>
+                                <span x-text="formatIDR(calculateFinalTotal())"></span>
+                            </div>
+                            <button @click="openPaymentModal" class="w-full bg-indigo-600 py-4 rounded-2xl font-black text-lg uppercase italic shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed" :disabled="cart.length === 0">
+                                Bayar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <div x-show="showReceiptModal" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
+            
+            <div class="p-6 bg-slate-50 border-b no-print">
+                <h3 class="font-black text-xl mb-4 text-center italic uppercase">Pembayaran</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm font-bold text-slate-600">
+                        <span>Total Tagihan:</span>
+                        <span class="text-indigo-600 text-lg" x-text="formatIDR(calculateFinalTotal())"></span>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase text-slate-400">Uang Diterima</label>
+                        <input type="number" x-model="cashReceived" class="w-full border-2 border-slate-200 p-3 rounded-xl text-lg font-bold outline-none focus:border-emerald-500 transition">
+                    </div>
+                    <div class="flex justify-between items-center bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                        <span class="text-xs font-bold text-emerald-800 uppercase">Kembalian</span>
+                        <span class="text-xl font-black text-emerald-600" x-text="formatIDR(calculateChange())"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="receipt-content" class="p-8 bg-white overflow-y-auto custom-scrollbar">
+                <div class="font-mono text-[11px] text-slate-800 leading-tight">
+                    <center class="mb-4">
+                        <h2 class="font-black text-xl uppercase tracking-tighter mb-1" x-text="currentStore.storeName"></h2>
+                        <p class="text-[9px] mb-2">POS System Receipt</p>
+                        <p class="text-[8px] opacity-60 border-y border-dashed py-2" x-text="new Date().toLocaleString('id-ID')"></p>
+                    </center>
+
+                    <div class="space-y-1 mb-4 border-b border-dashed pb-4">
+                        <template x-for="item in cart">
+                            <div class="flex justify-between">
+                                <span class="w-2/3 truncate" x-text="item.name"></span>
+                                <div class="text-right">
+                                    <span class="block" x-text="item.qty + ' x ' + formatIDR(item.price)"></span>
+                                    <span class="font-bold" x-text="formatIDR(item.price * item.qty)"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="space-y-1 text-[10px]">
+                        <div class="flex justify-between">
+                            <span>Subtotal</span>
+                            <span x-text="formatIDR(calculateSubtotal())"></span>
+                        </div>
+                        <div x-show="discountPercent > 0" class="flex justify-between text-red-500">
+                            <span x-text="'Disc (' + discountPercent + '%)'"></span>
+                            <span x-text="'-' + formatIDR(calculateDiscountAmount())"></span>
+                        </div>
+                        <div class="flex justify-between font-black text-sm pt-2 mt-2 border-t border-dashed">
+                            <span>TOTAL</span>
+                            <span x-text="formatIDR(calculateFinalTotal())"></span>
+                        </div>
+                         <div class="flex justify-between pt-1">
+                            <span>Tunai</span>
+                            <span x-text="formatIDR(cashReceived)"></span>
+                        </div>
+                         <div class="flex justify-between pt-1 font-bold">
+                            <span>Kembali</span>
+                            <span x-text="formatIDR(calculateChange())"></span>
+                        </div>
+                    </div>
+
+                    <center class="mt-8">
+                        <p class="font-black text-[10px] uppercase tracking-widest">Terima Kasih</p>
+                    </center>
+                </div>
+            </div>
+
+            <div class="p-6 bg-white border-t no-print space-y-3">
+                <button @click="processPayment" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-xl transition hover:bg-black disabled:opacity-50" :disabled="cashReceived < calculateFinalTotal()">
+                    Cetak & Selesai
+                </button>
+                <button @click="showReceiptModal = false" class="w-full text-slate-400 font-bold text-xs uppercase hover:text-red-500">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function kasirKyta() {
+            return {
+                currentPage: 'landing', loginRole: '', currentUser: null, users: [], allStores: {}, cart: [],
+                currentStore: { storeName: 'Toko KasirKyta', products: [], salesHistory: [], pin: '1234' },
+                loginForm: { user: '', pass: '' }, newKasir: { user: '', pass: '' }, newP: { name: '', price: '', stock: '' },
+                discountPercent: 0, cashReceived: 0, showReceiptModal: false, searchQuery: '',
+                salesChart: null, fastMovingChart: null,
+
+                initApp() {
+                    const savedUsers = JSON.parse(localStorage.getItem('kk_accounts')) || [{ user: 'admin', pass: 'admin', role: 'owner', owner: 'admin' }];
+                    this.users = savedUsers;
+                    this.allStores = JSON.parse(localStorage.getItem('kk_stores')) || {};
+                    const session = localStorage.getItem('kk_session');
+                    if(session) {
+                        this.currentUser = JSON.parse(session);
+                        this.loadStoreData();
+                        this.currentPage = 'dashboard';
+                        // Beri waktu DOM render sebelum init chart
+                        setTimeout(() => this.initCharts(), 500);
+                    }
+                },
+
+                // --- AUTH & DATA MANAGEMENT ---
+                openLogin(role) { this.loginRole = role; this.currentPage = 'login-form'; },
+                
+                handleLogin() {
+                    const user = this.users.find(u => u.user === this.loginForm.user && u.pass === this.loginForm.pass);
+                    if(user && (user.role === this.loginRole || (this.loginRole === 'owner' && user.role === 'owner'))) {
+                        this.currentUser = user;
+                        localStorage.setItem('kk_session', JSON.stringify(user));
+                        this.loadStoreData();
+                        this.currentPage = 'dashboard';
+                        this.loginForm = { user: '', pass: '' };
+                        setTimeout(() => this.initCharts(), 500);
+                    } else { alert("Login Gagal! Cek Username/Password."); }
+                },
+
+                logout() { localStorage.removeItem('kk_session'); location.reload(); },
+
+                loadStoreData() {
+                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    this.currentStore = this.allStores[storeKey] || { storeName: 'Toko ' + storeKey, products: [], salesHistory: [], pin: '1234' };
+                    // Migration check: ensure salesHistory exists
+                    if(!this.currentStore.salesHistory) this.currentStore.salesHistory = [];
+                },
+
+                saveStoreData() {
+                    const storeKey = this.currentUser.role === 'kasir' ? this.currentUser.owner : this.currentUser.user;
+                    this.allStores[storeKey] = this.currentStore;
+                    localStorage.setItem('kk_stores', JSON.stringify(this.allStores));
+                },
+
+                createUser(role) {
+                    if(!this.newKasir.user || !this.newKasir.pass) return alert("Isi Username & Pass!");
+                    this.users.push({ user: this.newKasir.user, pass: this.newKasir.pass, role: role, owner: this.currentUser.user });
+                    localStorage.setItem('kk_accounts', JSON.stringify(this.users));
+                    alert("Kasir Berhasil Dibuat!");
+                    this.newKasir = { user: '', pass: '' };
+                },
+
+                // --- PRODUCT & CART LOGIC ---
+                get filteredProducts() {
+                    if (this.searchQuery === '') return this.currentStore.products;
+                    return this.currentStore.products.filter(p => p.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                },
+
+                addProduct() {
+                    if(!this.newP.name || !this.newP.price) return alert("Isi data produk!");
+                    this.currentStore.products.push({ id: Date.now(), name: this.newP.name, price: parseInt(this.newP.price), stock: parseInt(this.newP.stock) || 0 });
+                    this.saveStoreData();
+                    this.newP = { name: '', price: '', stock: '' };
+                },
+
+                deleteProduct(id) {
+                    if(prompt("Masukkan PIN Toko:") === this.currentStore.pin) {
+                        this.currentStore.products = this.currentStore.products.filter(p => p.id !== id);
+                        this.saveStoreData();
+                    } else { alert("PIN Salah!"); }
+                },
+
+                addToCart(p) {
+                    if(p.stock <= 0) return alert("Stok Habis!");
+                    let itm = this.cart.find(i => i.id === p.id);
+                    if(itm) { 
+                        if(itm.qty < p.stock) itm.qty++; 
+                        else alert("Stok tidak cukup!");
+                    } else { 
+                        this.cart.push({...p, qty: 1}); 
+                    }
+                },
+
+                updateQty(index, change) {
+                    const item = this.cart[index];
+                    const product = this.currentStore.products.find(p => p.id === item.id);
+                    if (change === 1 && item.qty >= product.stock) return alert("Maksimal stok tercapai");
+                    item.qty += change;
+                    if (item.qty <= 0) this.cart.splice(index, 1);
+                },
+
+                secureRemoveItem(index) {
+                    // Logic: Kasir butuh PIN, Owner langsung hapus
+                    if (this.currentUser.role === 'kasir') {
+                        if (prompt("KEAMANAN: Masukkan PIN Admin/Owner:") === this.currentStore.pin) {
+                            this.cart.splice(index, 1);
+                        } else { alert("PIN Salah! Pembatalan ditolak."); }
+                    } else {
+                        this.cart.splice(index, 1);
+                    }
+                },
+
+                // --- TRANSACTION & ANALYTICS ---
+                calculateSubtotal() { return this.cart.reduce((t, i) => t + (i.price * i.qty), 0); },
+                calculateDiscountAmount() { return (this.calculateSubtotal() * (this.discountPercent / 100)); },
+                calculateFinalTotal() { return Math.round(this.calculateSubtotal() - this.calculateDiscountAmount()); },
+                calculateChange() { return this.cashReceived - this.calculateFinalTotal(); },
+
+                openPaymentModal() {
+                    this.cashReceived = 0;
+                    this.showReceiptModal = true;
+                },
+
+                processPayment() {
+                    const total = this.calculateFinalTotal();
+                    // SAVE LOGIC: Include 'items' in history for detailed analytics
+                    this.currentStore.salesHistory.push({
+                        date: new Date().toISOString(),
+                        amount: total,
+                        items: JSON.parse(JSON.stringify(this.cart)) // Deep copy items
+                    });
+
+                    // Update Stock
+                    this.cart.forEach(item => {
+                        let prod = this.currentStore.products.find(p => p.id === item.id);
+                        if(prod) prod.stock -= item.qty;
+                    });
+
+                    this.saveStoreData();
+                    window.print();
+                    
+                    // Reset
+                    this.cart = [];
+                    this.showReceiptModal = false;
+                    this.discountPercent = 0;
+                    this.refreshCharts(); // Update charts realtime
+                },
+
+                // --- CHART JS INTEGRATION ---
+                initCharts() {
+                    if(this.currentUser.role === 'kasir') return; // Kasir gak butuh chart
+
+                    // 1. Sales Chart Logic (Last 7 Days)
+                    const ctxSales = document.getElementById('salesChart');
+                    if(ctxSales) {
+                        // Destroy old chart if exists
+                        if(this.salesChart) this.salesChart.destroy();
+                        
+                        // Process Data
+                        const last7Days = [...Array(7)].map((_, i) => {
+                            const d = new Date();
+                            d.setDate(d.getDate() - i);
+                            return d.toDateString();
+                        }).reverse();
+
+                        const dataSales = last7Days.map(dateStr => {
+                            return this.currentStore.salesHistory
+                                .filter(s => new Date(s.date).toDateString() === dateStr)
+                                .reduce((sum, s) => sum + s.amount, 0);
+                        });
+
+                        this.salesChart = new Chart(ctxSales, {
+                            type: 'line',
+                            data: {
+                                labels: last7Days.map(d => d.split(' ').slice(0,3).join(' ')),
+                                datasets: [{
+                                    label: 'Omset (Rp)',
+                                    data: dataSales,
+                                    borderColor: '#4f46e5',
+                                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
+                        });
+                    }
+
+                    // 2. Fast Moving Goods Logic
+                    const ctxFast = document.getElementById('fastMovingChart');
+                    if(ctxFast) {
+                        if(this.fastMovingChart) this.fastMovingChart.destroy();
+
+                        // Aggregate Item Sales
+                        let itemSales = {};
+                        this.currentStore.salesHistory.forEach(trx => {
+                            if(trx.items) {
+                                trx.items.forEach(item => {
+                                    itemSales[item.name] = (itemSales[item.name] || 0) + item.qty;
+                                });
+                            }
+                        });
+
+                        // Sort & Top 5
+                        const sortedItems = Object.entries(itemSales)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5);
+
+                        this.fastMovingChart = new Chart(ctxFast, {
+                            type: 'doughnut',
+                            data: {
+                                labels: sortedItems.map(i => i[0]),
+                                datasets: [{
+                                    data: sortedItems.map(i => i[1]),
+                                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false, 
+                                plugins: { 
+                                    legend: { position: 'right', labels: { color: 'white', font: {size: 10} } } 
+                                } 
+                            }
+                        });
+                    }
+                },
+
+                refreshCharts() {
+                    this.loadStoreData();
+                    setTimeout(() => this.initCharts(), 100);
+                },
+
+                calculateDailyOmset() {
+                    const today = new Date().toDateString();
+                    return this.currentStore.salesHistory.filter(s => new Date(s.date).toDateString() === today).reduce((sum, s) => sum + s.amount, 0);
+                },
+
+                calculateMonthlyOmset() {
+                    const now = new Date();
+                    return this.currentStore.salesHistory.filter(s => {
+                        const d = new Date(s.date);
+                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    }).reduce((sum, s) => sum + s.amount, 0);
+                },
+
+                formatIDR(n) { return 'Rp ' + new Intl.NumberFormat('id-ID').format(n); }
+            }
+        }
+    </script>
+</body>
+</html>
